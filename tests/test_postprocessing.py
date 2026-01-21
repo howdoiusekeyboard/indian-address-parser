@@ -98,14 +98,14 @@ class TestRuleBasedRefiner:
         """Test removal of overlapping entities."""
         entities = [
             AddressEntity(label="AREA", value="DELHI", start=0, end=5, confidence=0.9),
-            AddressEntity(label="CITY", value="DELHI", start=0, end=5, confidence=0.95),
+            AddressEntity(label="SUBAREA", value="DELHI", start=0, end=5, confidence=0.85),
         ]
         refined = refiner.refine("DELHI", entities)
 
-        # Should keep only one (higher confidence)
-        delhi_entities = [e for e in refined if "DELHI" in e.value]
-        assert len(delhi_entities) == 1
-        assert delhi_entities[0].confidence == 0.95
+        # Should keep only one AREA/SUBAREA (higher confidence), but CITY is always preserved
+        area_entities = [e for e in refined if e.label in ("AREA", "SUBAREA")]
+        assert len(area_entities) == 1
+        assert area_entities[0].confidence == 0.9
 
     def test_low_confidence_filtering(self, refiner):
         """Test filtering of low confidence entities."""
