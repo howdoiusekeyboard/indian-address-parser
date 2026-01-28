@@ -225,14 +225,14 @@ gcloud run deploy indian-address-parser \
 
 | Metric | mBERT-CRF (v2.0) | IndicBERTv2-CRF (v2.1) |
 |--------|-------------------|------------------------|
-| Precision | 77.5% | TBD (retraining) |
-| Recall | 81.6% | TBD (retraining) |
-| F1 Score | 79.5% | Expected 82-85% |
+| Precision | 77.5% | 59.8% |
+| Recall | 81.6% | 69.3% |
+| F1 Score | 79.5% | 64.2% |
 | Inference Time | ~25ms | ~25ms |
 
-Tested on held-out test set of 60+ Delhi addresses.
+Tested on held-out validation set of 14 Delhi addresses.
 
-> **Note**: v2.1 upgrades the base model from `bert-base-multilingual-cased` to `ai4bharat/IndicBERTv2-SS`, which is pretrained on 20.9B tokens of Indian language text. Expected F1 improvement of +2-5%.
+> **Note**: IndicBERTv2-SS results are from initial training on small dataset (615 samples, 14 val). Performance varies with validation set size. Entity-level: PINCODE 100%, CITY 96%, KHASRA 88%.
 
 ## Project Structure
 
