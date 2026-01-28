@@ -99,6 +99,7 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+nul
 
 # Secrets
 .env.local

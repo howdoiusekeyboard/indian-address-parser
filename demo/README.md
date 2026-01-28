@@ -4,7 +4,7 @@ emoji: 🏠
 colorFrom: blue
 colorTo: green
 sdk: gradio
-sdk_version: 4.0.0
+sdk_version: "6.3.0"
 app_file: app.py
 pinned: false
 license: mit
@@ -12,13 +12,13 @@ license: mit
 
 # Indian Address Parser
 
-Parse unstructured Indian addresses into structured components using **mBERT-CRF**.
+Parse unstructured Indian addresses into structured components using **IndicBERTv2-CRF**.
 
 ## Features
 
 - **Multilingual**: Supports Hindi (Devanagari) + English
 - **15 Entity Types**: House Number, Floor, Block, Gali, Colony, Area, Khasra, Pincode, etc.
-- **High Accuracy**: 94%+ F1 score on test data
+- **~80% F1 score** on held-out test data (mBERT-CRF baseline)
 - **Fast**: < 30ms inference time
 
 ## Example
@@ -41,16 +41,6 @@ PLOT NO752 FIRST FLOOR, BLOCK H-3 KH NO 24/1/3/2/2/202, KAUNWAR SINGH NAGAR NEW 
 
 ## Technical Details
 
-- **Model**: bert-base-multilingual-cased + CRF layer
+- **Model**: ai4bharat/IndicBERTv2-SS + CRF layer
 - **Training Data**: 600+ annotated Delhi addresses
 - **Framework**: PyTorch + HuggingFace Transformers
-
-## API
-
-A REST API is also available at: `https://api.example.com/parse`
-
-```bash
-curl -X POST "https://api.example.com/parse" \
-  -H "Content-Type: application/json" \
-  -d '{"address": "PLOT NO752 FIRST FLOOR, NEW DELHI, 110041"}'
-```

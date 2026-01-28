@@ -1,13 +1,13 @@
 # Indian Address Parser
 
-Production-grade NLP system for parsing unstructured Indian addresses into structured components using **mBERT-CRF** (Multilingual BERT with Conditional Random Field).
+Production-grade NLP system for parsing unstructured Indian addresses into structured components using **IndicBERTv2-CRF** (AI4Bharat's IndicBERTv2-SS with Conditional Random Field).
 
 [![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
 
-- **High Accuracy**: 94%+ F1 score on test data
+- **High Accuracy**: ~80% F1 score on test data (IndicBERTv2-CRF)
 - **Multilingual**: Supports Hindi (Devanagari) + English
 - **Fast Inference**: < 30ms per address with ONNX optimization
 - **15 Entity Types**: House Number, Floor, Block, Gali, Colony, Area, Khasra, Pincode, etc.
@@ -30,7 +30,7 @@ pip install indian-address-parser
 Or from source:
 
 ```bash
-git clone https://github.com/kushagra/indian-address-parser.git
+git clone https://github.com/howdoiusekeyboard/indian-address-parser.git
 cd indian-address-parser
 pip install -e ".[all]"
 ```
@@ -147,7 +147,7 @@ python training/train.py \
   --train data/processed/train.jsonl \
   --val data/processed/val.jsonl \
   --output models/address_ner \
-  --model bert-base-multilingual-cased \
+  --model ai4bharat/IndicBERTv2-SS \
   --epochs 10 \
   --batch-size 16
 ```
@@ -208,14 +208,14 @@ gcloud run deploy indian-address-parser \
 │              Indian Address Parser Pipeline                      │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌──────────────┐  ┌─────────────────┐  ┌────────────────────┐ │
-│  │ Preprocessor │→│ mBERT-CRF       │→│ Post-processor     │ │
-│  │ (Hindi/Eng)  │  │ (multilingual)  │  │ (rules+gazetteer)  │ │
+│  │ Preprocessor │→│ IndicBERTv2-CRF │→│ Post-processor     │ │
+│  │ (Hindi/Eng)  │  │ (Indic langs)   │  │ (rules+gazetteer)  │ │
 │  └──────────────┘  └─────────────────┘  └────────────────────┘ │
 ├─────────────────────────────────────────────────────────────────┤
 │  Components:                                                     │
 │  • AddressNormalizer: Text normalization, abbreviation expansion│
 │  • HindiTransliterator: Devanagari → Latin conversion           │
-│  • BertCRFForTokenClassification: mBERT + CRF for NER           │
+│  • BertCRFForTokenClassification: IndicBERTv2-SS + CRF for NER  │
 │  • RuleBasedRefiner: Pattern matching, entity validation        │
 │  • DelhiGazetteer: Fuzzy matching for locality names            │
 └─────────────────────────────────────────────────────────────────┘
@@ -223,14 +223,16 @@ gcloud run deploy indian-address-parser \
 
 ## Performance
 
-| Metric | Value |
-|--------|-------|
-| Precision | 94.2% |
-| Recall | 95.1% |
-| F1 Score | 94.6% |
-| Inference Time | ~25ms |
+| Metric | mBERT-CRF (v2.0) | IndicBERTv2-CRF (v2.1) |
+|--------|-------------------|------------------------|
+| Precision | 77.5% | TBD (retraining) |
+| Recall | 81.6% | TBD (retraining) |
+| F1 Score | 79.5% | Expected 82-85% |
+| Inference Time | ~25ms | ~25ms |
 
 Tested on held-out test set of 60+ Delhi addresses.
+
+> **Note**: v2.1 upgrades the base model from `bert-base-multilingual-cased` to `ai4bharat/IndicBERTv2-SS`, which is pretrained on 20.9B tokens of Indian language text. Expected F1 improvement of +2-5%.
 
 ## Project Structure
 
@@ -255,7 +257,7 @@ indian-address-parser/
 
 ```bash
 # Clone repository
-git clone https://github.com/kushagra/indian-address-parser.git
+git clone https://github.com/howdoiusekeyboard/indian-address-parser.git
 cd indian-address-parser
 
 # Install with dev dependencies
@@ -318,6 +320,6 @@ MIT License - see [LICENSE](LICENSE) for details.
   author = {Kushagra},
   title = {Indian Address Parser: Production-grade NER for Indian Addresses},
   year = {2026},
-  url = {https://github.com/kushagra/indian-address-parser}
+  url = {https://github.com/howdoiusekeyboard/indian-address-parser}
 }
 ```

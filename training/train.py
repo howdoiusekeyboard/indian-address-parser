@@ -196,7 +196,7 @@ def train(
     train_data: str,
     val_data: str,
     output_dir: str,
-    model_name: str = "bert-base-multilingual-cased",
+    model_name: str = "ai4bharat/IndicBERTv2-SS",
     epochs: int = 10,
     batch_size: int = 16,
     learning_rate: float = 5e-5,
@@ -341,7 +341,7 @@ def main():
     parser.add_argument("--train", required=True, help="Path to training JSONL")
     parser.add_argument("--val", required=True, help="Path to validation JSONL")
     parser.add_argument("--output", required=True, help="Output directory")
-    parser.add_argument("--model", default="bert-base-multilingual-cased", help="Pretrained model")
+    parser.add_argument("--model", default="ai4bharat/IndicBERTv2-SS", help="Pretrained model (default: IndicBERTv2-SS)")
     parser.add_argument("--epochs", type=int, default=10, help="Number of epochs")
     parser.add_argument("--batch-size", type=int, default=16, help="Batch size")
     parser.add_argument("--lr", type=float, default=5e-5, help="Learning rate")
