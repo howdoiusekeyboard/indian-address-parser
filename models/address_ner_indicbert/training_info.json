@@ -1,0 +1,8 @@
+{
+  "best_f1": 0.6422018348623854,
+  "best_precision": 0.5982905982905983,
+  "best_recall": 0.693069306930693,
+  "epoch": 5,
+  "model_name": "ai4bharat/IndicBERTv2-SS",
+  "use_crf": true
+}

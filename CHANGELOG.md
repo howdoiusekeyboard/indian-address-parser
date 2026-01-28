@@ -16,9 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Corrected performance metrics in README (was 94%+, actual mBERT-CRF baseline: 79.5% F1)
 
-### Expected
-- F1 improvement of +2-5% from IndicBERTv2-SS (82-85% expected)
-- Model size reduction (~480MB vs mBERT's ~680MB)
+### Training Results
+- IndicBERTv2-CRF achieved 64.2% F1 on validation (14 samples)
+- Entity-level: PINCODE 100%, CITY 96%, KHASRA 88%, HOUSE_NUMBER 0%
+- Model size: ~1.1GB (pytorch_model.bin)
+- Note: Lower than mBERT baseline likely due to small val set; needs hyperparameter tuning
 
 ## [2.0.0] - 2026-01-21
 
