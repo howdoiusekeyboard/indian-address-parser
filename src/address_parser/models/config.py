@@ -7,8 +7,10 @@ from dataclasses import dataclass
 class ModelConfig:
     """Configuration for BERT-CRF NER model."""
 
-    # Base model
-    model_name: str = "bert-base-multilingual-cased"
+    # Base model - IndicBERTv2-SS recommended for Indian languages
+    # Options: "bert-base-multilingual-cased", "ai4bharat/IndicBERTv2-SS",
+    #          "google/muril-base-cased", "xlm-roberta-base"
+    model_name: str = "ai4bharat/IndicBERTv2-SS"
     use_crf: bool = True
 
     # Architecture
@@ -50,6 +52,10 @@ class ModelConfig:
         configs = {
             "mbert": cls(
                 model_name="bert-base-multilingual-cased",
+                hidden_size=768,
+            ),
+            "indicbert": cls(
+                model_name="ai4bharat/IndicBERTv2-SS",
                 hidden_size=768,
             ),
             "distilbert": cls(

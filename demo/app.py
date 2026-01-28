@@ -234,9 +234,9 @@ with gr.Blocks(title="Indian Address Parser") as demo:
     gr.Markdown(
         """
         ---
-        **Model**: mBERT-CRF (bert-base-multilingual-cased + CRF layer)
+        **Model**: IndicBERTv2-SS + CRF (ai4bharat/IndicBERTv2-SS + CRF layer)
         | **Training Data**: 600+ annotated Delhi addresses
-        | **GitHub**: [indian-address-parser](https://github.com/kushagra/indian-address-parser)
+        | **GitHub**: [indian-address-parser](https://github.com/howdoiusekeyboard/indian-address-parser)
         """
     )
 

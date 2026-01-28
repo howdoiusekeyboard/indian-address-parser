@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-01-28
+
+### Changed
+- **Model upgrade**: Replaced `bert-base-multilingual-cased` with `ai4bharat/IndicBERTv2-SS` as default base model
+- IndicBERTv2-SS is pretrained on 20.9B tokens of Indian language text (24 Indic languages)
+- Added `indicbert` preset to `ModelConfig.from_pretrained_name()`
+- Updated training script default to IndicBERTv2-SS
+
+### Fixed
+- Corrected performance metrics in README (was 94%+, actual mBERT-CRF baseline: 79.5% F1)
+
+### Expected
+- F1 improvement of +2-5% from IndicBERTv2-SS (82-85% expected)
+- Model size reduction (~480MB vs mBERT's ~680MB)
+
 ## [2.0.0] - 2026-01-21
 
 ### Added
@@ -26,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated Gradio to v6.3
 
 ### Technical
-- 94%+ F1 score on test data
+- 79.5% F1 score on test data (mBERT-CRF)
 - <30ms inference time per address
 - 15 entity types for Indian address components
 - Support for mixed Hindi-English addresses
