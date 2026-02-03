@@ -1,6 +1,5 @@
 """Delhi locality gazetteer for fuzzy matching and validation."""
 
-
 from rapidfuzz import fuzz, process
 
 

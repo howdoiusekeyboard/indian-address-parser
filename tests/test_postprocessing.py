@@ -118,12 +118,10 @@ class TestRuleBasedRefiner:
         assert len(refined) == 0
 
     def test_empty_value_filtering(self, refiner):
-        """Test filtering of empty entities."""
-        entities = [
-            AddressEntity(label="AREA", value="  ", start=0, end=2, confidence=0.9),
-        ]
-        refined = refiner.refine("  ", entities)
-        assert len(refined) == 0
+        """Test that whitespace-only values are rejected by schema validation."""
+        import pytest
+        with pytest.raises(Exception):  # Pydantic ValidationError
+            AddressEntity(label="AREA", value="  ", start=0, end=2, confidence=0.9)
 
 
 class TestPostprocessingIntegration:

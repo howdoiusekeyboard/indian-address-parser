@@ -1,0 +1,14 @@
+{
+  "best_f1": 0.8868894601542417,
+  "best_precision": 0.8712121212121212,
+  "best_recall": 0.9031413612565445,
+  "epoch": 11,
+  "model_name": "ai4bharat/IndicBERTv2-SS",
+  "use_crf": true,
+  "learning_rate": 2e-05,
+  "crf_learning_rate": 0.001,
+  "lr_decay": 0.95,
+  "warmup_ratio": 0.1,
+  "train_samples": 1945,
+  "val_samples": 64
+}

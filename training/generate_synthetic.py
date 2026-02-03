@@ -132,104 +132,64 @@ def tokenize_and_label(text, label):
 
 def generate_sample(sample_id):
     """Generate a single synthetic training sample."""
-    components = []
-    all_tokens = []
-    all_labels = []
+    # Collect (component_text, label) pairs first
+    component_parts = []
 
     # House number (80% chance)
     if random.random() < 0.8:
-        house = generate_house_number()
-        tokens, labels = tokenize_and_label(house, "HOUSE_NUMBER")
-        all_tokens.extend(tokens)
-        all_labels.extend(labels)
-        components.append(house)
+        component_parts.append((generate_house_number(), "HOUSE_NUMBER"))
 
     # Floor (50% chance)
     if random.random() < 0.5:
-        floor = random.choice(FLOOR_OPTIONS)
-        tokens, labels = tokenize_and_label(floor, "FLOOR")
-        all_tokens.extend(tokens)
-        all_labels.extend(labels)
-        components.append(floor)
+        component_parts.append((random.choice(FLOOR_OPTIONS), "FLOOR"))
 
     # Block (30% chance)
     if random.random() < 0.3:
-        block = generate_block()
-        tokens, labels = tokenize_and_label(block, "BLOCK")
-        all_tokens.extend(tokens)
-        all_labels.extend(labels)
-        components.append(block)
+        component_parts.append((generate_block(), "BLOCK"))
 
     # Sector (20% chance)
     if random.random() < 0.2:
-        sector = generate_sector()
-        tokens, labels = tokenize_and_label(sector, "SECTOR")
-        all_tokens.extend(tokens)
-        all_labels.extend(labels)
-        components.append(sector)
+        component_parts.append((generate_sector(), "SECTOR"))
 
     # Gali (40% chance)
     if random.random() < 0.4:
-        gali = generate_gali()
-        tokens, labels = tokenize_and_label(gali, "GALI")
-        all_tokens.extend(tokens)
-        all_labels.extend(labels)
-        components.append(gali)
+        component_parts.append((generate_gali(), "GALI"))
 
     # Colony (50% chance)
     if random.random() < 0.5:
-        colony = random.choice(COLONIES)
-        tokens, labels = tokenize_and_label(colony, "COLONY")
-        all_tokens.extend(tokens)
-        all_labels.extend(labels)
-        components.append(colony)
+        component_parts.append((random.choice(COLONIES), "COLONY"))
 
     # Subarea/Locality (70% chance)
     if random.random() < 0.7:
-        locality = random.choice(LOCALITIES)
-        tokens, labels = tokenize_and_label(locality, "SUBAREA")
-        all_tokens.extend(tokens)
-        all_labels.extend(labels)
-        components.append(locality)
+        component_parts.append((random.choice(LOCALITIES), "SUBAREA"))
 
     # Area (40% chance)
     if random.random() < 0.4:
-        area = random.choice(AREAS)
-        tokens, labels = tokenize_and_label(area, "AREA")
-        all_tokens.extend(tokens)
-        all_labels.extend(labels)
-        components.append(area)
+        component_parts.append((random.choice(AREAS), "AREA"))
 
     # City (always DELHI for Delhi addresses)
-    city = random.choice(["DELHI", "NEW DELHI", "Delhi"])
-    tokens, labels = tokenize_and_label(city, "CITY")
-    all_tokens.extend(tokens)
-    all_labels.extend(labels)
-    components.append(city)
+    component_parts.append((random.choice(["DELHI", "NEW DELHI", "Delhi"]), "CITY"))
 
     # Pincode (90% chance)
     if random.random() < 0.9:
-        pincode = random.choice(PINCODES)
-        tokens, labels = tokenize_and_label(pincode, "PINCODE")
+        component_parts.append((random.choice(PINCODES), "PINCODE"))
+
+    # Build tokens and labels with comma separators between components
+    all_tokens = []
+    all_labels = []
+
+    for i, (comp_text, label) in enumerate(component_parts):
+        if i > 0:
+            # Add comma separator token with O label
+            all_tokens.append(",")
+            all_labels.append("O")
+
+        tokens, labels = tokenize_and_label(comp_text, label)
         all_tokens.extend(tokens)
         all_labels.extend(labels)
-        components.append(pincode)
 
-    # Join with commas
-    text = ", ".join(components)
-
-    # Re-tokenize the full text properly
-    final_tokens = []
-    final_labels = []
-
-    for comp_idx, (component, comp_tokens, comp_labels) in enumerate(zip(
-        components,
-        [tokenize_and_label(c, "O")[0] for c in components],
-        [all_labels[sum(len(tokenize_and_label(components[i], "O")[0]) for i in range(j)):
-                    sum(len(tokenize_and_label(components[i], "O")[0]) for i in range(j+1))]
-         for j in range(len(components))]
-    )):
-        pass  # Complex re-alignment not needed for simple generation
+    # Build text to match tokens
+    text = " ".join(all_tokens)
 
     return {
         "id": sample_id,
@@ -252,39 +212,116 @@ def generate_dataset(n_samples=500, seed=42):
     return samples
 
 
-def main():
-    # Generate synthetic samples
-    print("Generating synthetic training data...")
-    synthetic = generate_dataset(n_samples=500)
-    print(f"Generated {len(synthetic)} synthetic samples")
-
-    # Load existing training data
-    train_path = Path("data/processed/train.jsonl")
-    existing = []
-    if train_path.exists():
-        with open(train_path, "r") as f:
-            for line in f:
-                existing.append(json.loads(line))
-        print(f"Loaded {len(existing)} existing samples")
-
-    # Combine
-    combined = existing + synthetic
-    print(f"Total: {len(combined)} samples")
-
-    # Save augmented training data
-    output_path = Path("data/processed/train_augmented.jsonl")
-    with open(output_path, "w") as f:
-        for sample in combined:
+def save_jsonl(samples, path):
+    """Save samples to JSONL file."""
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        for sample in samples:
             f.write(json.dumps(sample) + "\n")
 
-    print(f"Saved augmented dataset to {output_path}")
 
-    # Show some examples
+def load_jsonl(path):
+    """Load samples from JSONL file."""
+    samples = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            samples.append(json.loads(line.strip()))
+    return samples
+
+
+def validate_sample(sample):
+    """Check that tokens and ner_tags are aligned."""
+    if len(sample["tokens"]) != len(sample["ner_tags"]):
+        return False
+    # Check text roughly matches tokens
+    expected_text = " ".join(sample["tokens"])
+    return sample["text"] == expected_text
+
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Generate synthetic training data",
+        color=True,
+        suggest_on_error=True,
+    )
+    parser.add_argument("--n-train", type=int, default=1000, help="Number of synthetic training samples")
+    parser.add_argument("--n-val", type=int, default=50, help="Number of synthetic validation samples")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--data-dir", default="data/processed", help="Data directory")
+    args = parser.parse_args()
+
+    data_dir = Path(args.data_dir)
+
+    # Generate synthetic training samples
+    print(f"Generating {args.n_train} synthetic training samples...")
+    synthetic_train = generate_dataset(n_samples=args.n_train, seed=args.seed)
+    print(f"Generated {len(synthetic_train)} synthetic training samples")
+
+    # Validate
+    valid = sum(1 for s in synthetic_train if validate_sample(s))
+    print(f"Valid samples: {valid}/{len(synthetic_train)}")
+
+    # Save synthetic training data
+    synth_train_path = data_dir / "synthetic_train.jsonl"
+    save_jsonl(synthetic_train, synth_train_path)
+    print(f"Saved synthetic training data to {synth_train_path}")
+
+    # Generate synthetic validation samples (different seed)
+    print(f"\nGenerating {args.n_val} synthetic validation samples...")
+    synthetic_val = generate_dataset(n_samples=args.n_val, seed=args.seed + 1000)
+    print(f"Generated {len(synthetic_val)} synthetic validation samples")
+
+    synth_val_path = data_dir / "synthetic_val.jsonl"
+    save_jsonl(synthetic_val, synth_val_path)
+    print(f"Saved synthetic validation data to {synth_val_path}")
+
+    # Load existing data and create combined datasets
+    train_path = data_dir / "train.jsonl"
+    train_aug_path = data_dir / "train_augmented.jsonl"
+    val_path = data_dir / "val.jsonl"
+
+    # Combined training: original + augmented + synthetic
+    combined_train = []
+    if train_aug_path.exists():
+        augmented = load_jsonl(train_aug_path)
+        combined_train.extend(augmented)
+        print(f"\nLoaded {len(augmented)} augmented samples (includes original)")
+    elif train_path.exists():
+        original = load_jsonl(train_path)
+        combined_train.extend(original)
+        print(f"\nLoaded {len(original)} original samples")
+
+    combined_train.extend(synthetic_train)
+    print(f"Combined training set: {len(combined_train)} samples")
+
+    combined_train_path = data_dir / "train_combined.jsonl"
+    save_jsonl(combined_train, combined_train_path)
+    print(f"Saved combined training data to {combined_train_path}")
+
+    # Expanded validation: original val + synthetic val
+    combined_val = []
+    if val_path.exists():
+        original_val = load_jsonl(val_path)
+        combined_val.extend(original_val)
+        print(f"\nLoaded {len(original_val)} original validation samples")
+
+    combined_val.extend(synthetic_val)
+    print(f"Combined validation set: {len(combined_val)} samples")
+
+    val_expanded_path = data_dir / "val_expanded.jsonl"
+    save_jsonl(combined_val, val_expanded_path)
+    print(f"Saved expanded validation data to {val_expanded_path}")
+
+    # Show examples
     print("\nExample synthetic samples:")
-    for sample in synthetic[:5]:
-        print(f"  {sample['text']}")
-        print(f"    Tokens: {sample['tokens'][:10]}...")
-        print(f"    Labels: {sample['ner_tags'][:10]}...")
+    for sample in synthetic_train[:3]:
+        print(f"  Text:   {sample['text']}")
+        print(f"  Tokens: {sample['tokens'][:10]}...")
+        print(f"  Labels: {sample['ner_tags'][:10]}...")
+        aligned = len(sample['tokens']) == len(sample['ner_tags'])
+        print(f"  Aligned: {aligned} ({len(sample['tokens'])} tokens, {len(sample['ner_tags'])} labels)")
         print()
 
 

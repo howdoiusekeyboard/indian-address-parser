@@ -9,7 +9,6 @@ import json
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -192,6 +191,86 @@ def evaluate(model, dataloader, device, id2label):
     }
 
 
+def get_layer_wise_lr_params(model, base_lr, lr_decay, classifier_lr, crf_lr, use_crf):
+    """
+    Build optimizer parameter groups with layer-wise learning rate decay.
+
+    Deeper (later) layers get higher LR, earlier layers get lower LR.
+    Formula: lr_layer = base_lr * decay^(num_layers - layer_index)
+    """
+    # Try to get encoder layers
+    encoder = None
+    if hasattr(model.bert, 'encoder'):
+        encoder = model.bert.encoder
+    elif hasattr(model.bert, 'transformer'):
+        encoder = model.bert.transformer
+
+    if encoder is None or lr_decay >= 1.0:
+        # Fallback: no layer-wise decay
+        params = [
+            {"params": list(model.bert.parameters()), "lr": base_lr},
+            {"params": list(model.classifier.parameters()), "lr": classifier_lr},
+        ]
+        if use_crf and model.crf is not None:
+            params.append({"params": list(model.crf.parameters()), "lr": crf_lr})
+        return params
+
+    # Get layer modules
+    if hasattr(encoder, 'layer'):
+        layers = list(encoder.layer)
+    elif hasattr(encoder, 'layers'):
+        layers = list(encoder.layers)
+    else:
+        # Can't find layers, fallback
+        params = [
+            {"params": list(model.bert.parameters()), "lr": base_lr},
+            {"params": list(model.classifier.parameters()), "lr": classifier_lr},
+        ]
+        if use_crf and model.crf is not None:
+            params.append({"params": list(model.crf.parameters()), "lr": crf_lr})
+        return params
+
+    num_layers = len(layers)
+    layer_param_ids = set()
+    optimizer_params = []
+
+    # Embeddings get lowest LR
+    embeddings_lr = base_lr * (lr_decay ** num_layers)
+    embeddings_params = []
+    if hasattr(model.bert, 'embeddings'):
+        embeddings_params = list(model.bert.embeddings.parameters())
+    layer_param_ids.update(id(p) for p in embeddings_params)
+    if embeddings_params:
+        optimizer_params.append({"params": embeddings_params, "lr": embeddings_lr})
+
+    # Each encoder layer: deeper = higher LR
+    for layer_idx, layer in enumerate(layers):
+        layer_lr = base_lr * (lr_decay ** (num_layers - layer_idx - 1))
+        layer_params = list(layer.parameters())
+        layer_param_ids.update(id(p) for p in layer_params)
+        optimizer_params.append({"params": layer_params, "lr": layer_lr})
+
+    # Any remaining BERT params (pooler, etc.) get base LR
+    remaining = [p for p in model.bert.parameters() if id(p) not in layer_param_ids]
+    if remaining:
+        optimizer_params.append({"params": remaining, "lr": base_lr})
+
+    # Classifier head
+    optimizer_params.append({"params": list(model.classifier.parameters()), "lr": classifier_lr})
+
+    # CRF
+    if use_crf and model.crf is not None:
+        optimizer_params.append({"params": list(model.crf.parameters()), "lr": crf_lr})
+
+    # Log LR summary
+    logger.info(f"Layer-wise LR decay={lr_decay}: embeddings={embeddings_lr:.2e}, "
+                f"layer_0={base_lr * lr_decay**(num_layers-1):.2e}, "
+                f"layer_{num_layers-1}={base_lr:.2e}, "
+                f"classifier={classifier_lr:.2e}, crf={crf_lr:.2e}")
+
+    return optimizer_params
+
+
 def train(
     train_data: str,
     val_data: str,
@@ -204,7 +283,10 @@ def train(
     max_length: int = 128,
     device: str = None,
     use_crf: bool = True,
-    early_stopping_patience: int = 3,
+    early_stopping_patience: int = 5,
+    lr_decay: float = 0.95,
+    warmup_ratio: float = 0.1,
+    test_data: str = None,
 ):
     """
     Main training function.
@@ -222,6 +304,9 @@ def train(
         device: Device to train on
         use_crf: Whether to use CRF layer
         early_stopping_patience: Early stopping patience
+        lr_decay: Layer-wise LR decay factor (1.0 = no decay)
+        warmup_ratio: Fraction of total steps for LR warmup
+        test_data: Optional path to test JSONL for final evaluation
     """
     # Setup device
     if device is None:
@@ -265,29 +350,29 @@ def train(
     model = BertCRFForTokenClassification(config)
     model.to(device)
 
-    # Setup optimizer with different learning rates
-    bert_params = list(model.bert.parameters())
-    classifier_params = list(model.classifier.parameters())
-
-    optimizer_params = [
-        {"params": bert_params, "lr": learning_rate},
-        {"params": classifier_params, "lr": learning_rate * 10},
-    ]
-
-    if use_crf and model.crf is not None:
-        crf_params = list(model.crf.parameters())
-        optimizer_params.append({"params": crf_params, "lr": crf_learning_rate})
+    # Setup optimizer with layer-wise learning rate decay
+    classifier_lr = learning_rate * 10
+    optimizer_params = get_layer_wise_lr_params(
+        model, learning_rate, lr_decay, classifier_lr, crf_learning_rate, use_crf
+    )
 
     optimizer = AdamW(optimizer_params, weight_decay=0.01)
 
     # Learning rate scheduler
     total_steps = len(train_loader) * epochs
-    warmup_steps = int(total_steps * 0.1)
+    warmup_steps = int(total_steps * warmup_ratio)
     scheduler = get_linear_schedule_with_warmup(
         optimizer,
         num_warmup_steps=warmup_steps,
         num_training_steps=total_steps,
     )
+
+    logger.info(f"Training config: model={model_name}, lr={learning_rate}, "
+                f"crf_lr={crf_learning_rate}, lr_decay={lr_decay}, "
+                f"warmup_ratio={warmup_ratio}, patience={early_stopping_patience}")
+    logger.info(f"Data: {len(train_dataset)} train, {len(val_dataset)} val")
+    logger.info(f"Steps: {total_steps} total, {warmup_steps} warmup, "
+                f"{len(train_loader)} steps/epoch")
 
     # Training loop
     best_f1 = 0
@@ -305,7 +390,7 @@ def train(
         # Evaluate
         metrics = evaluate(model, val_loader, device, ID2LABEL)
         logger.info(f"Validation - P: {metrics['precision']:.4f}, R: {metrics['recall']:.4f}, F1: {metrics['f1']:.4f}")
-        logger.info(f"\n{metrics['report']}")
+        logger.info(f"\nPer-entity classification report:\n{metrics['report']}")
 
         # Save best model
         if metrics["f1"] > best_f1:
@@ -325,6 +410,12 @@ def train(
                     "epoch": epoch + 1,
                     "model_name": model_name,
                     "use_crf": use_crf,
+                    "learning_rate": learning_rate,
+                    "crf_learning_rate": crf_learning_rate,
+                    "lr_decay": lr_decay,
+                    "warmup_ratio": warmup_ratio,
+                    "train_samples": len(train_dataset),
+                    "val_samples": len(val_dataset),
                 }, f, indent=2)
         else:
             patience_counter += 1
@@ -335,9 +426,41 @@ def train(
     logger.info(f"\nTraining complete! Best F1: {best_f1:.4f}")
     logger.info(f"Model saved to {output_path}")
 
+    # Test set evaluation
+    if test_data:
+        logger.info(f"\n{'='*50}")
+        logger.info("Evaluating on test set...")
+        logger.info(f"{'='*50}")
+
+        # Reload best model for test evaluation
+        best_model = BertCRFForTokenClassification.from_pretrained(str(output_path), device=device)
+        best_model.to(device)
+
+        test_dataset = AddressNERDataset(test_data, tokenizer, max_length)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
+
+        test_metrics = evaluate(best_model, test_loader, device, ID2LABEL)
+        logger.info(f"Test - P: {test_metrics['precision']:.4f}, R: {test_metrics['recall']:.4f}, F1: {test_metrics['f1']:.4f}")
+        logger.info(f"\nTest per-entity classification report:\n{test_metrics['report']}")
+
+        # Save test results
+        with open(output_path / "test_results.json", "w") as f:
+            json.dump({
+                "test_f1": test_metrics["f1"],
+                "test_precision": test_metrics["precision"],
+                "test_recall": test_metrics["recall"],
+                "test_report": test_metrics["report"],
+            }, f, indent=2)
+
+    return best_f1
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Train address NER model")
+    parser = argparse.ArgumentParser(
+        description="Train address NER model",
+        color=True,
+        suggest_on_error=True,
+    )
     parser.add_argument("--train", required=True, help="Path to training JSONL")
     parser.add_argument("--val", required=True, help="Path to validation JSONL")
     parser.add_argument("--output", required=True, help="Output directory")
@@ -349,7 +472,10 @@ def main():
     parser.add_argument("--max-length", type=int, default=128, help="Max sequence length")
     parser.add_argument("--device", default=None, help="Device (cuda/cpu/mps)")
     parser.add_argument("--no-crf", action="store_true", help="Disable CRF layer")
-    parser.add_argument("--patience", type=int, default=3, help="Early stopping patience")
+    parser.add_argument("--patience", type=int, default=5, help="Early stopping patience")
+    parser.add_argument("--lr-decay", type=float, default=0.95, help="Layer-wise LR decay factor (1.0=no decay)")
+    parser.add_argument("--warmup-ratio", type=float, default=0.1, help="Warmup ratio")
+    parser.add_argument("--test", default=None, help="Path to test JSONL for final evaluation")
 
     args = parser.parse_args()
 
@@ -366,6 +492,9 @@ def main():
         device=args.device,
         use_crf=not args.no_crf,
         early_stopping_patience=args.patience,
+        lr_decay=args.lr_decay,
+        warmup_ratio=args.warmup_ratio,
+        test_data=args.test,
     )
 
 

@@ -5,7 +5,7 @@ A modern NLP system for parsing unstructured Indian addresses into
 structured components using mBERT-CRF architecture with Hindi+English support.
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 __author__ = "Kushagra"
 
 from address_parser.pipeline import AddressParser

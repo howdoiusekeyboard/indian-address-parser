@@ -38,17 +38,17 @@ parser: AddressParser | None = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize parser on startup."""
+    """Initialize parser on startup: baked-in model → rules-only fallback."""
     global parser
 
-    model_path = os.getenv("MODEL_PATH", "./models/address_ner")
+    model_path = os.getenv("MODEL_PATH", "./models/address_ner_v3")
+    device = os.getenv("DEVICE", "cpu")
 
-    # Check if model exists
     if Path(model_path).exists() and (Path(model_path) / "pytorch_model.bin").exists():
         print(f"Loading model from {model_path}")
         parser = AddressParser.from_pretrained(
             model_path,
-            device=os.getenv("DEVICE", "cpu"),
+            device=device,
             use_rules=True,
             use_gazetteer=True,
         )
@@ -59,7 +59,6 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Cleanup
     parser = None
 
 
@@ -86,7 +85,7 @@ app = FastAPI(
     {"address": "PLOT NO752 FIRST FLOOR, BLOCK H-3, NEW DELHI, 110041"}
     ```
     """,
-    version="2.0.0",
+    version="2.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
@@ -96,7 +95,6 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -124,7 +122,7 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         model_loaded=parser is not None and parser.model is not None,
-        version="2.0.0"
+        version="2.1.0"
     )
 
 
@@ -168,10 +166,12 @@ async def parse_address(request: ParseRequest):
     try:
         response = parser.parse_with_timing(request.address)
 
-        # Optionally remove confidence scores
+        # Strip confidence scores by reconstructing frozen entities
         if not request.return_confidence and response.result:
-            for entity in response.result.entities:
-                entity.confidence = 1.0
+            stripped = [e.model_copy(update={"confidence": 1.0}) for e in response.result.entities]
+            response = response.model_copy(
+                update={"result": response.result.model_copy(update={"entities": stripped})}
+            )
 
         return response
 
@@ -210,9 +210,11 @@ async def parse_batch(request: BatchParseRequest):
         response = parser.parse_batch(request.addresses)
 
         if not request.return_confidence:
+            stripped_results = []
             for result in response.results:
-                for entity in result.entities:
-                    entity.confidence = 1.0
+                stripped = [e.model_copy(update={"confidence": 1.0}) for e in result.entities]
+                stripped_results.append(result.model_copy(update={"entities": stripped}))
+            response = response.model_copy(update={"results": stripped_results})
 
         return response
 

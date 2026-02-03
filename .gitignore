@@ -106,3 +106,9 @@ nul
 .env.*.local
 secrets.json
 credentials.json
+
+# Archive docs (personal notes)
+docs/archive/
+
+# Gradio cache
+.gradio/

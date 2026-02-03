@@ -1,0 +1,25 @@
+.venv/
+venv/
+.git/
+.github/
+tests/
+training/
+notebooks/
+data/raw/
+docs/
+models/
+*.txt
+*.pdf
+*.docx
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+*.pyc
+uv.lock
+.pre-commit-config.yaml
+
+# Exclude most markdown but keep README.md for pyproject.toml
+*.md
+!README.md

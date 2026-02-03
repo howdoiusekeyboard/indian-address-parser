@@ -1,0 +1,6 @@
+{
+  "test_f1": 0.8,
+  "test_precision": 0.7931034482758621,
+  "test_recall": 0.8070175438596491,
+  "test_report": "              precision    recall  f1-score   support\n\n        AREA       0.87      0.87      0.87        15\n        CITY       1.00      1.00      1.00        24\n      COLONY       0.00      0.00      0.00         2\n       FLOOR       0.85      0.85      0.85        13\n        GALI       0.75      0.67      0.71         9\nHOUSE_NUMBER       0.79      0.79      0.79        14\n      KHASRA       0.75      0.82      0.78        11\n     PINCODE       1.00      1.00      1.00        15\n        PLOT       0.00      0.00      0.00         3\n     SUBAREA       0.25      0.38      0.30         8\n\n   micro avg       0.79      0.81      0.80       114\n   macro avg       0.62      0.64      0.63       114\nweighted avg       0.80      0.81      0.80       114\n"
+}

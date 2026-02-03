@@ -1,58 +1,44 @@
-# Indian Address Parser - Cloud Run Dockerfile
-# Multi-stage build for optimized image size
+# Indian Address Parser - Multi-stage Docker build
+# Bakes model from HuggingFace Hub into image
 
-# Stage 1: Build
-FROM python:3.11-slim as builder
+# Stage 1: Build dependencies with uv
+FROM python:3.14-slim AS builder
 
 WORKDIR /app
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY pyproject.toml README.md ./
+COPY src/ ./src/
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Install dependencies
-COPY pyproject.toml .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir ".[api]"
+RUN uv venv /opt/venv && \
+    VIRTUAL_ENV=/opt/venv uv pip install --python /opt/venv/bin/python ".[api,demo]"
 
 # Stage 2: Runtime
-FROM python:3.11-slim as runtime
+FROM python:3.14-slim
 
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 WORKDIR /app
 
-# Copy virtual environment
 COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH=/app/src \
+    PYTHONUNBUFFERED=1 \
+    MODEL_PATH=/app/models/address_ner_v3 \
+    DEVICE=cpu \
+    PORT=8080 \
+    TORCHDYNAMO_DISABLE=1 \
+    HF_HOME=/tmp/hf_cache \
+    TRANSFORMERS_CACHE=/tmp/hf_cache
 
-# Copy application code
-COPY src/ ./src/
-COPY api/ ./api/
-COPY models/ ./models/
+# Download models at build time
+ARG HF_MODEL_REPO=x2aqq/indian-address-parser-model
+RUN python -c "from huggingface_hub import snapshot_download; snapshot_download('${HF_MODEL_REPO}', local_dir='/app/models/address_ner_v3')"
+RUN python -c "from transformers import AutoModel, AutoTokenizer; AutoModel.from_pretrained('ai4bharat/IndicBERTv2-SS'); AutoTokenizer.from_pretrained('ai4bharat/IndicBERTv2-SS')"
 
-# Set environment variables
-ENV PYTHONPATH=/app/src
-ENV MODEL_PATH=/app/models/address_ner
-ENV DEVICE=cpu
-ENV PORT=8080
+COPY --from=builder /app/src/ ./src/
+COPY demo/ ./demo/
 
-# Expose port
+RUN mkdir -p /tmp/hf_cache && chown -R appuser:appuser /app /tmp/hf_cache
+
+USER appuser
 EXPOSE 8080
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
-
-# Run with gunicorn for production
-CMD ["gunicorn", "api.main:app", \
-     "--workers", "1", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--bind", "0.0.0.0:8080", \
-     "--timeout", "120", \
-     "--keep-alive", "5", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+CMD ["python", "demo/app.py"]

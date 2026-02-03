@@ -36,8 +36,11 @@ class ModelConfig:
     label_smoothing: float = 0.0
 
     # Early stopping
-    early_stopping_patience: int = 3
+    early_stopping_patience: int = 5
     early_stopping_threshold: float = 0.001
+
+    # Layer-wise learning rate decay
+    lr_decay: float = 0.95
 
     # Paths
     output_dir: str = "./models"

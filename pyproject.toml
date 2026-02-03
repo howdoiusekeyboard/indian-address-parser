@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "indian-address-parser"
-version = "2.0.0"
+version = "2.1.0"
 description = "Production-grade Indian address parsing using mBERT-CRF"
 readme = "README.md"
 license = {text = "MIT"}
@@ -23,30 +23,35 @@ classifiers = [
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "torch>=2.9.1",
-    "transformers>=4.57.6",
+    "torch>=2.10.0",
+    "transformers>=5.0.0",
     "tokenizers>=0.22.2",
     "datasets>=4.5.0",
+    "safetensors>=0.7.0",
+    "huggingface-hub>=1.3.7",
     "seqeval>=1.2.2",
-    "numpy>=2.4.1",
-    "pandas>=2.3.3",
+    "numpy>=2.4.2",
+    "pandas>=3.0.0",
     "scikit-learn>=1.8.0",
     "tqdm>=4.67.1",
     "pydantic>=2.12.5",
-    "indic-transliteration>=2.3.75",
+    "indic-transliteration>=2.3.76",
     "regex>=2026.1.15",
     "rapidfuzz>=3.14.3",
 ]
 
 [project.optional-dependencies]
 api = [
-    "fastapi>=0.128.0",
-    "uvicorn[standard]>=0.40.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
     "gunicorn>=23.0.0",
-    "python-multipart>=0.0.21",
+    "python-multipart>=0.0.18",
+    "orjson>=3.10.0",
 ]
 demo = [
-    "gradio>=6.3.0",
+    "gradio>=6.5.1",
+    "gradio-client>=2.0.3",
+    "pillow>=12.1.0",
 ]
 training = [
     "accelerate>=1.12.0",
@@ -54,8 +59,6 @@ training = [
     "optuna>=4.7.0",
 ]
 onnx = [
-    # Note: onnxruntime doesn't have Python 3.14 wheels yet (as of Jan 2026)
-    # Use with Python 3.13 or lower, or install pre-release with --prerelease=allow
     "onnx>=1.20.1; python_version < '3.14'",
     "onnxruntime>=1.23.2; python_version < '3.14'",
 ]
@@ -69,11 +72,9 @@ dev = [
     "pre-commit>=4.5.1",
 ]
 all = [
-    # Note: onnx excluded on Python 3.14+ due to missing wheel support
     "indian-address-parser[api,demo,training,dev]",
 ]
 all-with-onnx = [
-    # For Python 3.13 and below only
     "indian-address-parser[api,demo,training,onnx,dev]",
 ]
 
@@ -112,7 +113,6 @@ plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 module = "address_parser.models.bert_crf"
-# PyTorch has dynamic tensor types that don't play well with strict typing
 disable_error_code = ["assignment", "arg-type", "union-attr", "index", "return-value"]
 
 [tool.pydantic-mypy]

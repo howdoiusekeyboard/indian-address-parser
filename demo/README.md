@@ -1,16 +1,4 @@
----
-title: Indian Address Parser
-emoji: 🏠
-colorFrom: blue
-colorTo: green
-sdk: gradio
-sdk_version: "6.3.0"
-app_file: app.py
-pinned: false
-license: mit
----
-
-# Indian Address Parser
+# Indian Address Parser Demo
 
 Parse unstructured Indian addresses into structured components using **IndicBERTv2-CRF**.
 
@@ -18,7 +6,7 @@ Parse unstructured Indian addresses into structured components using **IndicBERT
 
 - **Multilingual**: Supports Hindi (Devanagari) + English
 - **15 Entity Types**: House Number, Floor, Block, Gali, Colony, Area, Khasra, Pincode, etc.
-- **~80% F1 score** on held-out test data (mBERT-CRF baseline)
+- **~80% F1 score** on held-out test data
 - **Fast**: < 30ms inference time
 
 ## Example
@@ -43,4 +31,4 @@ PLOT NO752 FIRST FLOOR, BLOCK H-3 KH NO 24/1/3/2/2/202, KAUNWAR SINGH NAGAR NEW 
 
 - **Model**: ai4bharat/IndicBERTv2-SS + CRF layer
 - **Training Data**: 600+ annotated Delhi addresses
-- **Framework**: PyTorch + HuggingFace Transformers
+- **Framework**: PyTorch + HuggingFace Transformers + Pydantic v2

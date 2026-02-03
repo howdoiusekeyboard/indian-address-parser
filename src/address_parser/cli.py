@@ -20,7 +20,7 @@ Examples:
   address-parser --input addresses.txt --output parsed.json
 
   # Use trained model
-  address-parser --model ./models/address_ner "H.NO. 123, LAJPAT NAGAR"
+  address-parser --model ./models/address_ner_v3 "H.NO. 123, LAJPAT NAGAR"
         """
     )
 
@@ -50,7 +50,7 @@ Examples:
     parser.add_argument(
         "--version", "-v",
         action="version",
-        version="indian-address-parser 2.0.0"
+        version="indian-address-parser 2.1.0"
     )
 
     args = parser.parse_args()

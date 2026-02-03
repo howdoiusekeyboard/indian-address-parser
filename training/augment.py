@@ -11,7 +11,6 @@ Expands the training dataset through various augmentation techniques:
 
 import random
 import re
-from typing import Optional
 from dataclasses import dataclass
 
 
@@ -202,6 +201,72 @@ class AddressAugmenter:
 
         return text
 
+    def _realign_labels(
+        self,
+        original_tokens: list[str],
+        original_labels: list[str],
+        new_text: str,
+    ) -> tuple[list[str], list[str]] | None:
+        """
+        Realign BIO labels after text augmentation changes token count.
+
+        Uses character offsets to map new tokens back to original tokens,
+        then transfers labels accordingly.
+
+        Returns:
+            (new_tokens, new_labels) or None if alignment fails.
+        """
+        old_text = " ".join(original_tokens)
+        new_tokens = new_text.split()
+
+        if not new_tokens:
+            return None
+
+        # Build char-offset-to-label map from original tokens
+        char_labels = []
+        pos = 0
+        for token, label in zip(original_tokens, original_labels):
+            for _ in token:
+                char_labels.append(label)
+                pos += 1
+            # space separator
+            char_labels.append("O")
+            pos += 1
+
+        # If augmentation changed length significantly, use a simpler approach:
+        # map each new token to the original label at its approximate position
+        old_len = len(old_text)
+        new_len = len(new_text)
+
+        if old_len == 0 or new_len == 0:
+            return None
+
+        new_labels = []
+        new_pos = 0
+        for token in new_tokens:
+            # Map new position to old position proportionally
+            ratio = new_pos / max(new_len, 1)
+            old_pos = min(int(ratio * old_len), len(char_labels) - 1)
+
+            # Find the label at this position in the original
+            if old_pos < len(char_labels):
+                mapped_label = char_labels[old_pos]
+            else:
+                mapped_label = "O"
+
+            new_labels.append(mapped_label)
+            new_pos += len(token) + 1  # +1 for space
+
+        # Fix BIO consistency: ensure I- tags follow B- tags of same type
+        for i in range(len(new_labels)):
+            if new_labels[i].startswith("I-"):
+                entity = new_labels[i][2:]
+                # Check if previous is B- or I- of same entity
+                if i == 0 or (not new_labels[i-1].endswith(entity)):
+                    new_labels[i] = "B-" + entity
+
+        return new_tokens, new_labels
+
     def augment_bio_sample(
         self,
         tokens: list[str],
@@ -212,7 +277,8 @@ class AddressAugmenter:
         """
         Augment a BIO-formatted sample.
 
-        This is more complex as we need to maintain token-label alignment.
+        Handles both same-length and different-length augmentations
+        by realigning labels using character offset mapping.
 
         Args:
             tokens: Original tokens
@@ -227,11 +293,10 @@ class AddressAugmenter:
         text = " ".join(tokens)
 
         for aug_text, aug_type in self.augment_text(text, n_augments):
-            # Re-tokenize and try to align labels
             new_tokens = aug_text.split()
 
             if len(new_tokens) == len(tokens):
-                # Same number of tokens - can reuse labels
+                # Same number of tokens - can reuse labels directly
                 augmented_samples.append(AugmentedSample(
                     text=aug_text,
                     tokens=new_tokens,
@@ -239,8 +304,18 @@ class AddressAugmenter:
                     original_id=original_id,
                     augmentation_type=aug_type
                 ))
-            # If token count changed, skip this augmentation
-            # (more complex alignment would be needed)
+            else:
+                # Token count changed - realign labels
+                result = self._realign_labels(tokens, labels, aug_text)
+                if result is not None:
+                    new_toks, new_labs = result
+                    augmented_samples.append(AugmentedSample(
+                        text=aug_text,
+                        tokens=new_toks,
+                        labels=new_labs,
+                        original_id=original_id,
+                        augmentation_type=aug_type + "+realigned"
+                    ))
 
         return augmented_samples
 

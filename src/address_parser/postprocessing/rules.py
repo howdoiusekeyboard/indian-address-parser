@@ -390,36 +390,32 @@ class RuleBasedRefiner:
         result = []
 
         for entity in entities:
-            corrected = entity.model_copy()
+            updates: dict[str, object] = {}
 
             # Expand KHASRA to include full pattern
             if entity.label == "KHASRA":
                 match = self.PATTERNS["KHASRA"].search(text)
                 if match:
-                    corrected.value = match.group(0)
-                    corrected.start = match.start()
-                    corrected.end = match.end()
+                    updates = {"value": match.group(0), "start": match.start(), "end": match.end()}
 
             # Expand BLOCK to include identifier
             elif entity.label == "BLOCK":
                 match = self.PATTERNS["BLOCK"].search(text)
                 if match:
-                    corrected.value = match.group(0)
-                    corrected.start = match.start()
-                    corrected.end = match.end()
+                    updates = {"value": match.group(0), "start": match.start(), "end": match.end()}
 
             # Expand FLOOR to include floor number
             elif entity.label == "FLOOR":
                 match = self.PATTERNS["FLOOR"].search(text)
                 if match:
-                    corrected.value = match.group(0)
-                    corrected.start = match.start()
-                    corrected.end = match.end()
+                    updates = {"value": match.group(0), "start": match.start(), "end": match.end()}
 
             # Clean up leading/trailing whitespace from value
-            corrected.value = corrected.value.strip()
+            final_value = (updates.get("value") or entity.value).strip()
+            if final_value != entity.value or updates:
+                updates["value"] = final_value
 
-            result.append(corrected)
+            result.append(entity.model_copy(update=updates) if updates else entity)
 
         return result
 
@@ -432,24 +428,27 @@ class RuleBasedRefiner:
         result = []
 
         for entity in entities:
-            adjusted = entity.model_copy()
+            new_confidence = entity.confidence
 
             # Boost confidence for pattern matches
             if entity.label in self.PATTERNS:
                 pattern = self.PATTERNS[entity.label]
                 if pattern.fullmatch(entity.value):
-                    adjusted.confidence = min(1.0, entity.confidence + 0.1)
+                    new_confidence = min(1.0, new_confidence + 0.1)
 
             # Boost confidence for gazetteer matches
             if self.gazetteer and entity.label in ("AREA", "SUBAREA", "COLONY"):
                 if self.gazetteer.is_known_locality(entity.value):
-                    adjusted.confidence = min(1.0, entity.confidence + 0.15)
+                    new_confidence = min(1.0, new_confidence + 0.15)
 
             # Reduce confidence for very short entities
             if len(entity.value) < 3:
-                adjusted.confidence = max(0.0, entity.confidence - 0.2)
+                new_confidence = max(0.0, new_confidence - 0.2)
 
-            result.append(adjusted)
+            if new_confidence != entity.confidence:
+                result.append(entity.model_copy(update={"confidence": new_confidence}))
+            else:
+                result.append(entity)
 
         return result
 
@@ -513,8 +512,7 @@ class RuleBasedRefiner:
                     continue
                 if self.gazetteer and not self.gazetteer.validate_pincode(entity.value):
                     # Pincode outside Delhi range - reduce confidence but keep
-                    entity = entity.model_copy()
-                    entity.confidence *= 0.7
+                    entity = entity.model_copy(update={"confidence": entity.confidence * 0.7})
 
             result.append(entity)
 

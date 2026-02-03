@@ -1,8 +1,0 @@
-{
-  "best_f1": 0.7410714285714287,
-  "best_precision": 0.6747967479674797,
-  "best_recall": 0.8217821782178217,
-  "epoch": 3,
-  "model_name": "bert-base-multilingual-cased",
-  "use_crf": true
-}

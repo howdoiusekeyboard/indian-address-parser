@@ -268,18 +268,30 @@ class BertCRFForTokenClassification(nn.Module):
 
     def _get_compiled_forward(self):
         """Lazy compile forward pass on first inference call."""
-        if self._compiled_forward is None and hasattr(torch, "compile"):
-            try:
-                self._compiled_forward = torch.compile(
-                    self.forward,
-                    backend="inductor",
-                    mode="reduce-overhead",  # Optimize for inference
-                    dynamic=True,  # Handle variable sequence lengths
-                )
-            except Exception:
-                # Fallback to eager execution if compilation fails
+        # Skip torch.compile on Windows without MSVC or when explicitly disabled
+        # The inductor backend requires a C++ compiler (cl on Windows, gcc/clang on Linux)
+        import os
+        import sys
+
+        skip_compile = (
+            os.environ.get("TORCH_COMPILE_DISABLE", "0") == "1"
+            or sys.platform == "win32"  # Skip on Windows to avoid cl requirement
+        )
+
+        if self._compiled_forward is None:
+            if not skip_compile and hasattr(torch, "compile"):
+                try:
+                    self._compiled_forward = torch.compile(
+                        self.forward,
+                        backend="inductor",
+                        mode="reduce-overhead",
+                        dynamic=True,
+                    )
+                except Exception:
+                    self._compiled_forward = self.forward
+            else:
                 self._compiled_forward = self.forward
-        return self._compiled_forward or self.forward
+        return self._compiled_forward
 
     def forward(
         self,

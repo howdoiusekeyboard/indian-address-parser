@@ -37,7 +37,7 @@ class AddressParser:
     - Rule-based post-processing with gazetteer
 
     Example:
-        >>> parser = AddressParser.from_pretrained("./models/address_ner")
+        >>> parser = AddressParser.from_pretrained("./models/address_ner_v3")
         >>> result = parser.parse("PLOT NO752 FIRST FLOOR, NEW DELHI, 110041")
         >>> print(result.house_number)  # "PLOT NO752"
     """
