@@ -50,7 +50,7 @@ def load_parser() -> AddressParser:
     """Load parser from local path, HuggingFace Hub, or fall back to rules-only."""
     from huggingface_hub import snapshot_download
 
-    local_path = Path(os.getenv("MODEL_PATH", "./models/address_ner_v3"))
+    local_path = Path(os.getenv("MODEL_PATH", "./models/address_ner_v4"))
     hf_repo = os.getenv("HF_MODEL_REPO", "")
 
     if local_path.exists() and (local_path / "pytorch_model.bin").exists():

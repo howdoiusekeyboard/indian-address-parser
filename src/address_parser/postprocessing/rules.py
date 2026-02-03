@@ -25,24 +25,35 @@ class RuleBasedRefiner:
             r'\b(?:KH\.?\s*(?:NO\.?)?\s*|KHASRA\s*(?:NO\.?)?\s*)[\d/]+(?:[/-]\d+)*\b',
             re.IGNORECASE
         ),
+        # PLOT - separate from HOUSE_NUMBER for better disambiguation
+        "PLOT": re.compile(
+            r'\b(?:PLOT|PLT|P\.?)(?:\s*NO\.?|\s*#)?\s*[A-Z]?\d+[A-Z]?(?:[-/]\d+)*\b',
+            re.IGNORECASE
+        ),
         "HOUSE_NUMBER": re.compile(
-            r'\b(?:H\.?\s*(?:NO\.?)?\s*|HOUSE\s*(?:NO\.?)?\s*|PLOT\s*(?:NO\.?)?\s*)?[A-Z]?\d+[A-Z]?(?:[-/]\d+)*\b',
+            r'\b(?:H\.?\s*(?:NO\.?)?\s*|HOUSE\s*(?:NO\.?)?\s*|HNO\s*|FLAT\s*(?:NO\.?)?\s*)?[A-Z]?\d+[A-Z]?(?:[-/]\d+)*\b',
             re.IGNORECASE
         ),
         "FLOOR": re.compile(
-            r'\b(?:GROUND|FIRST|SECOND|THIRD|FOURTH|FIFTH|1ST|2ND|3RD|4TH|5TH|GF|FF|SF|TF)?\s*(?:FLOOR|FLR)\b',
+            r'\b(?:GROUND|FIRST|SECOND|THIRD|FOURTH|FIFTH|1ST|2ND|3RD|4TH|5TH|GF|FF|SF|TF|G/F|F/F|S/F|BASEMENT|LOWER\s+GROUND|UPPER\s+GROUND)?\s*(?:FLOOR|FLR)?\b',
             re.IGNORECASE
         ),
         "BLOCK": re.compile(
-            r'\b(?:BLOCK|BLK|BL)\s*[A-Z]?[-]?[A-Z0-9]+\b',
+            r'\b(?:BLOCK|BLK|BL|B)[-\s]?[A-Z]?[-]?[A-Z0-9]+\b',
             re.IGNORECASE
         ),
         "SECTOR": re.compile(
-            r'\b(?:SECTOR|SEC)\s*\d+[A-Z]?\b',
+            r'\b(?:SECTOR|SEC)[-\s]?\d+[A-Z]?\b',
             re.IGNORECASE
         ),
+        # GALI - expanded with more variations
         "GALI": re.compile(
-            r'\b(?:GALI|GALLI|LANE)\s*(?:NO\.?)?\s*\d+[A-Z]?\b',
+            r'\b(?:GALI|GALLI|LANE|STREET|ST\.|G\.?\s*NO\.?)\s*(?:NO\.?)?\s*\d+[A-Z]?\b',
+            re.IGNORECASE
+        ),
+        # COLONY - suffix-based detection
+        "COLONY": re.compile(
+            r'\b[A-Z][A-Z\s]+(?:NAGAR|VIHAR|COLONY|ENCLAVE|PARK|GARDEN|PURI|BAGH|KUNJ|EXTENSION|EXTN|PHASE)\b',
             re.IGNORECASE
         ),
     }
@@ -88,18 +99,56 @@ class RuleBasedRefiner:
 
     # Known multi-word localities that get fragmented
     KNOWN_LOCALITIES = [
-        "LAJPAT NAGAR", "MALVIYA NAGAR", "KAROL BAGH", "HAUZ KHAS",
-        "GREEN PARK", "GREATER KAILASH", "DEFENCE COLONY", "SOUTH EXTENSION",
-        "CHITTARANJAN PARK", "NEHRU PLACE", "SARITA VIHAR", "VASANT KUNJ",
+        # South Delhi
+        "LAJPAT NAGAR", "MALVIYA NAGAR", "HAUZ KHAS", "GREEN PARK",
+        "GREATER KAILASH", "DEFENCE COLONY", "SOUTH EXTENSION", "KALKAJI",
+        "NEHRU PLACE", "OKHLA", "JASOLA", "SARITA VIHAR", "VASANT KUNJ",
+        "CHITTARANJAN PARK", "SANGAM VIHAR", "GOVINDPURI", "LADO SARAI",
+        "DERA MANDI", "SATBARI", "CHATTARPUR", "MEHRAULI", "SAKET",
+        # North Delhi
         "CIVIL LINES", "MODEL TOWN", "MUKHERJEE NAGAR", "KAMLA NAGAR",
-        "ASHOK VIHAR", "SHALIMAR BAGH", "PREET VIHAR", "MAYUR VIHAR",
-        "LAKSHMI NAGAR", "GANDHI NAGAR", "DILSHAD GARDEN", "ANAND VIHAR",
-        "UTTAM NAGAR", "TILAK NAGAR", "RAJOURI GARDEN", "PUNJABI BAGH",
-        "PASCHIM VIHAR", "CONNAUGHT PLACE", "RAJENDER NAGAR", "PATEL NAGAR",
-        "KIRTI NAGAR", "LODHI ROAD", "GOLF LINKS", "SANGAM VIHAR",
-        "GOVINDPURI", "AMBEDKAR NAGAR", "LADO SARAI", "KAUNWAR SINGH NAGAR",
-        "BABA HARI DAS COLONY", "SWARN PARK", "CHANCHAL PARK", "DURGA PARK",
-        "RAJ NAGAR", "SADH NAGAR", "VIJAY ENCLAVE", "PALAM COLONY",
+        "ASHOK VIHAR", "SHALIMAR BAGH", "PITAMPURA", "ROHINI",
+        # East Delhi
+        "PREET VIHAR", "MAYUR VIHAR", "PATPARGANJ", "LAKSHMI NAGAR",
+        "GANDHI NAGAR", "DILSHAD GARDEN", "ANAND VIHAR", "SHAHDARA",
+        # West Delhi
+        "JANAKPURI", "DWARKA", "PALAM", "UTTAM NAGAR", "VIKASPURI",
+        "TILAK NAGAR", "RAJOURI GARDEN", "PUNJABI BAGH", "PASCHIM VIHAR",
+        "MUNDKA", "NANGLOI", "NAJAFGARH", "TIKRI KALAN", "NILOTHI",
+        # Central Delhi
+        "CONNAUGHT PLACE", "KAROL BAGH", "PAHARGANJ", "DARYAGANJ",
+        "RAJENDER NAGAR", "PATEL NAGAR", "KIRTI NAGAR", "LODHI ROAD",
+        "GOLF LINKS", "CHANDNI CHOWK", "SADAR BAZAAR", "KASHMERE GATE",
+        # Colonies (with -NAGAR suffix)
+        "RAJ NAGAR", "PREM NAGAR", "SHIV NAGAR", "HARI NAGAR", "KRISHNA NAGAR",
+        "GANESH NAGAR", "RAM NAGAR", "VIJAY NAGAR", "JAI NAGAR", "SADH NAGAR",
+        "KAUNWAR SINGH NAGAR", "BALJIT NAGAR", "PANDAV NAGAR", "SUNDER NAGAR",
+        "SANT NAGAR", "DEV NAGAR", "GURU NAGAR", "MOHAN NAGAR", "INDRA NAGAR",
+        "AMBEDKAR NAGAR",
+        # Colonies (with -VIHAR suffix)
+        "BUDH VIHAR", "AMBICA VIHAR", "NIRMAN VIHAR", "LOK VIHAR",
+        "JANATA VIHAR", "PUSHP VIHAR", "DEEP VIHAR", "RAJ VIHAR",
+        # Colonies (with -COLONY suffix)
+        "PALAM COLONY", "FRIENDS COLONY", "NEW FRIENDS COLONY",
+        "BABA HARI DAS COLONY", "TAGORE GARDEN COLONY", "MOTI BAGH COLONY",
+        "GULABI BAGH COLONY", "SHADIPUR COLONY", "PANCHSHEEL COLONY",
+        "GOLF LINKS COLONY", "JANGPURA EXTENSION COLONY", "LODHI COLONY",
+        # Colonies (with -ENCLAVE suffix)
+        "VIJAY ENCLAVE", "PANCHSHEEL ENCLAVE", "SAINIK ENCLAVE",
+        "SHALIMAR ENCLAVE", "MALVIYA ENCLAVE", "GREATER KAILASH ENCLAVE",
+        "NEHRU ENCLAVE", "CHITTARANJAN ENCLAVE", "SAKET ENCLAVE",
+        # Colonies (with -PARK suffix)
+        "DURGA PARK", "SWARN PARK", "CHANCHAL PARK", "DEER PARK",
+        "KRISHNA PARK", "SHANTI PARK", "RAJOURI PARK", "TILAK PARK",
+        "SUBHASH PARK", "NEHRU PARK", "INDIRA PARK",
+        # Colonies (with -BAGH suffix)
+        "GULABI BAGH", "KIRTI BAGH", "ASHOK BAGH", "PREM BAGH",
+        # Colonies (with -PURI suffix)
+        "KHIRKI PURI", "MADANGIR PURI", "SANGAM PURI", "SHIV PURI",
+        "RAM PURI", "HARI PURI", "GANESH PURI",
+        # Extensions
+        "JANGPURA EXTENSION", "LAJPAT NAGAR EXTENSION",
+        "SAFDARJUNG EXTENSION", "GREATER KAILASH EXTENSION", "KALKAJI EXTENSION",
     ]
 
     def __init__(self, use_gazetteer: bool = True):
@@ -317,11 +366,19 @@ class RuleBasedRefiner:
         """Add entities detected by regex patterns."""
         result = list(entities)
         existing_spans = {(e.start, e.end) for e in entities}
+        existing_labels = {e.label for e in entities}
+
+        def overlaps_existing(start: int, end: int) -> bool:
+            """Check if span overlaps with any existing entity."""
+            for e in result:
+                if not (end <= e.start or start >= e.end):
+                    return True
+            return False
 
         # Check for pincode
-        if not any(e.label == "PINCODE" for e in entities):
+        if "PINCODE" not in existing_labels:
             match = self.PATTERNS["PINCODE"].search(text)
-            if match and (match.start(), match.end()) not in existing_spans:
+            if match and not overlaps_existing(match.start(), match.end()):
                 result.append(AddressEntity(
                     label="PINCODE",
                     value=match.group(0),
@@ -329,6 +386,47 @@ class RuleBasedRefiner:
                     end=match.end(),
                     confidence=1.0  # Rule-based, high confidence
                 ))
+
+        # Check for PLOT (only if no PLOT already detected)
+        if "PLOT" not in existing_labels:
+            match = self.PATTERNS["PLOT"].search(text)
+            if match and not overlaps_existing(match.start(), match.end()):
+                # Verify it's actually a PLOT pattern (has PLOT/PLT prefix)
+                if re.match(r'(?:PLOT|PLT|P\.)', match.group(0), re.IGNORECASE):
+                    result.append(AddressEntity(
+                        label="PLOT",
+                        value=match.group(0),
+                        start=match.start(),
+                        end=match.end(),
+                        confidence=0.90
+                    ))
+
+        # Check for GALI (if not detected by model)
+        if "GALI" not in existing_labels:
+            match = self.PATTERNS["GALI"].search(text)
+            if match and not overlaps_existing(match.start(), match.end()):
+                result.append(AddressEntity(
+                    label="GALI",
+                    value=match.group(0),
+                    start=match.start(),
+                    end=match.end(),
+                    confidence=0.85
+                ))
+
+        # Check for COLONY using suffix pattern (if not detected)
+        if "COLONY" not in existing_labels:
+            match = self.PATTERNS["COLONY"].search(text)
+            if match and not overlaps_existing(match.start(), match.end()):
+                # Verify it's not an AREA pattern (like "SOUTH DELHI")
+                value = match.group(0).upper()
+                if not any(area in value for area in ["SOUTH DELHI", "NORTH DELHI", "EAST DELHI", "WEST DELHI", "CENTRAL DELHI", "OUTER DELHI"]):
+                    result.append(AddressEntity(
+                        label="COLONY",
+                        value=match.group(0),
+                        start=match.start(),
+                        end=match.end(),
+                        confidence=0.85
+                    ))
 
         # Check for city - DELHI addresses always have DELHI as city
         has_city = any(e.label == "CITY" for e in result)

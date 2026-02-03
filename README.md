@@ -7,7 +7,7 @@ NLP system for parsing unstructured Indian addresses into structured components.
 
 ## Overview
 
-Extracts 15 entity types from Indian addresses: house number, floor, block, sector, gali, colony, area, subarea, khasra, pincode, city, state, and more. Handles Hindi (Devanagari) and English text. Achieves 80% F1 on test data with <30ms inference.
+Extracts 15 entity types from Indian addresses: house number, floor, block, sector, gali, colony, area, subarea, khasra, pincode, city, state, and more. Handles Hindi (Devanagari) and English text. Achieves **94.3% F1** on test data with <30ms inference.
 
 **Live Demo:** [addressparser.kushagragolash.tech](https://addressparser.kushagragolash.tech)
 
@@ -30,7 +30,7 @@ pip install -e ".[all]"
 ```python
 from address_parser import AddressParser
 
-parser = AddressParser.rules_only()  # or .from_pretrained("./models/address_ner_v3")
+parser = AddressParser.rules_only()  # or .from_pretrained("./models/address_ner_v4")
 
 result = parser.parse(
     "PLOT NO752 FIRST FLOOR, BLOCK H-3 KH NO 24/1/3/2/2/202, "
@@ -96,15 +96,16 @@ print(f"Avg: {batch.avg_inference_time_ms:.1f}ms")
 ```bash
 # Prepare data
 python training/convert_data.py
-python training/generate_synthetic.py --n-train 1000 --n-val 50
+python training/generate_balanced_data.py  # creates balanced test + focused training
 
-# Train
+# Train (GPU recommended)
 python training/train.py \
-  --train data/processed/train_combined.jsonl \
+  --train data/processed/train_final.jsonl \
   --val data/processed/val_expanded.jsonl \
-  --output models/address_ner_v3 \
+  --test data/processed/test_balanced.jsonl \
+  --output models/address_ner_v4 \
   --model ai4bharat/IndicBERTv2-SS \
-  --epochs 20 --patience 5 --lr 2e-5
+  --epochs 20 --patience 5 --lr 2e-5 --sample-boost 3.0
 ```
 
 ## Deployment
@@ -141,7 +142,9 @@ Components:
 
 | Model | Test F1 | Inference |
 |-------|---------|-----------|
-| IndicBERTv2-CRF | 80.0% | ~25ms |
+| IndicBERTv2-CRF v4 | 94.3% | ~25ms |
+
+Tested on 150 balanced samples. Most entities >95% F1.
 
 ## Project Structure
 

@@ -30,10 +30,10 @@ steps:
            '--timeout', '300',
            '--concurrency', '10',
            '--allow-unauthenticated',
-           '--set-env-vars', 'MODEL_PATH=/app/models/address_ner_v3,DEVICE=cpu,TORCHDYNAMO_DISABLE=1']
+           '--set-env-vars', 'MODEL_PATH=/app/models/address_ner_v4,DEVICE=cpu,TORCHDYNAMO_DISABLE=1']
 
 substitutions:
-  _REGION: europe-west1
+  _REGION: asia-south1
   _REPO: indian-address-parser
   _HF_MODEL_REPO: x2aqq/indian-address-parser-model
   _TAG: v1

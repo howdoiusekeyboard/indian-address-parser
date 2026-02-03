@@ -22,7 +22,7 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
-    MODEL_PATH=/app/models/address_ner_v3 \
+    MODEL_PATH=/app/models/address_ner_v4 \
     DEVICE=cpu \
     PORT=8080 \
     TORCHDYNAMO_DISABLE=1 \
@@ -31,7 +31,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
 
 # Download models at build time
 ARG HF_MODEL_REPO=x2aqq/indian-address-parser-model
-RUN python -c "from huggingface_hub import snapshot_download; snapshot_download('${HF_MODEL_REPO}', local_dir='/app/models/address_ner_v3')"
+RUN python -c "from huggingface_hub import snapshot_download; snapshot_download('${HF_MODEL_REPO}', local_dir='/app/models/address_ner_v4')"
 RUN python -c "from transformers import AutoModel, AutoTokenizer; AutoModel.from_pretrained('ai4bharat/IndicBERTv2-SS'); AutoTokenizer.from_pretrained('ai4bharat/IndicBERTv2-SS')"
 
 COPY --from=builder /app/src/ ./src/

@@ -11,8 +11,9 @@ import logging
 from pathlib import Path
 
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from torch.optim import AdamW
+from collections import Counter
 from transformers import (
     AutoTokenizer,
     get_linear_schedule_with_warmup,
@@ -33,6 +34,69 @@ from address_parser.models.config import LABEL2ID, ID2LABEL, BIO_LABELS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Minority entities that need more sampling weight
+MINORITY_ENTITIES = {"PLOT", "COLONY", "SUBAREA", "GALI", "KHASRA", "SECTOR", "BLOCK", "STATE"}
+
+
+def compute_sample_weights(samples: list[dict], boost_factor: float = 3.0) -> list[float]:
+    """
+    Compute sampling weights for each sample based on entity presence.
+
+    Samples containing minority entities get higher weight.
+
+    Args:
+        samples: List of sample dicts with 'ner_tags' field
+        boost_factor: Weight multiplier for samples with minority entities
+
+    Returns:
+        List of sampling weights (one per sample)
+    """
+    # Count entity occurrences across all samples
+    entity_counts = Counter()
+    for sample in samples:
+        entities_in_sample = set()
+        for tag in sample.get("ner_tags", []):
+            if tag.startswith("B-"):
+                entities_in_sample.add(tag[2:])
+        for entity in entities_in_sample:
+            entity_counts[entity] += 1
+
+    # Compute inverse frequency (rarer = higher weight)
+    total_samples = len(samples)
+    entity_weights = {}
+    for entity, count in entity_counts.items():
+        if count > 0:
+            # Inverse document frequency: log(N/count) with smoothing
+            entity_weights[entity] = max(1.0, total_samples / count)
+
+    # Compute per-sample weight
+    sample_weights = []
+    for sample in samples:
+        entities_in_sample = set()
+        for tag in sample.get("ner_tags", []):
+            if tag.startswith("B-"):
+                entities_in_sample.add(tag[2:])
+
+        # Base weight
+        weight = 1.0
+
+        # Boost for minority entities
+        for entity in entities_in_sample:
+            if entity in MINORITY_ENTITIES:
+                weight = max(weight, boost_factor)
+                # Additional boost based on rarity
+                if entity_weights.get(entity, 1.0) > 5:
+                    weight = max(weight, boost_factor * 1.5)
+
+        sample_weights.append(weight)
+
+    # Log weight distribution
+    boosted = sum(1 for w in sample_weights if w > 1.0)
+    logger.info(f"Sample weighting: {boosted}/{len(samples)} samples boosted")
+    logger.info(f"Entity counts: {dict(sorted(entity_counts.items(), key=lambda x: x[1]))}")
+
+    return sample_weights
 
 
 class AddressNERDataset(Dataset):
@@ -287,6 +351,7 @@ def train(
     lr_decay: float = 0.95,
     warmup_ratio: float = 0.1,
     test_data: str = None,
+    sample_boost: float = 3.0,
 ):
     """
     Main training function.
@@ -324,10 +389,18 @@ def train(
     train_dataset = AddressNERDataset(train_data, tokenizer, max_length)
     val_dataset = AddressNERDataset(val_data, tokenizer, max_length)
 
+    # Compute sample weights for balanced sampling
+    sample_weights = compute_sample_weights(train_dataset.samples, boost_factor=sample_boost)
+    sampler = WeightedRandomSampler(
+        weights=sample_weights,
+        num_samples=len(train_dataset),
+        replacement=True,
+    )
+
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
-        shuffle=True,
+        sampler=sampler,  # Use weighted sampler instead of shuffle
         num_workers=0,
     )
     val_loader = DataLoader(
@@ -476,6 +549,7 @@ def main():
     parser.add_argument("--lr-decay", type=float, default=0.95, help="Layer-wise LR decay factor (1.0=no decay)")
     parser.add_argument("--warmup-ratio", type=float, default=0.1, help="Warmup ratio")
     parser.add_argument("--test", default=None, help="Path to test JSONL for final evaluation")
+    parser.add_argument("--sample-boost", type=float, default=3.0, help="Boost factor for minority entity samples")
 
     args = parser.parse_args()
 
@@ -495,6 +569,7 @@ def main():
         lr_decay=args.lr_decay,
         warmup_ratio=args.warmup_ratio,
         test_data=args.test,
+        sample_boost=args.sample_boost,
     )
 
 
