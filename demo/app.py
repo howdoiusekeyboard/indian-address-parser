@@ -210,7 +210,18 @@ CUSTOM_CSS = """
 .inference-time { font-family: monospace; font-size: 1.1em; }
 """
 
-with gr.Blocks(title="Indian Address Parser", css=CUSTOM_CSS) as demo:
+OG_HEAD = """
+<meta property="og:title" content="Indian Address Parser">
+<meta property="og:description" content="Parse unstructured Indian addresses into structured components. ML + NLP powered, supports Hindi and English.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://addressparser.kushagragolash.tech">
+<meta name="description" content="Parse unstructured Indian addresses into structured components. ML + NLP powered, supports Hindi and English.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Indian Address Parser">
+<meta name="twitter:description" content="ML + NLP system for parsing Indian addresses into structured components.">
+"""
+
+with gr.Blocks(title="Indian Address Parser", css=CUSTOM_CSS, head=OG_HEAD) as demo:
     gr.Markdown("""
 # Indian Address Parser
 
