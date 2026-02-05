@@ -10,6 +10,7 @@ import gradio as gr
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 # Path setup: add src to path for imports
@@ -95,6 +96,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_static_dir = Path(__file__).parent / "static"
+if _static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
 
 @app.get("/health", tags=["Health"])
@@ -213,12 +218,14 @@ CUSTOM_CSS = """
 OG_HEAD = """
 <meta property="og:title" content="Indian Address Parser">
 <meta property="og:description" content="Parse unstructured Indian addresses into structured components. ML + NLP powered, supports Hindi and English.">
+<meta property="og:image" content="https://addressparser.kushagragolash.tech/static/og-preview.jpeg">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://addressparser.kushagragolash.tech">
 <meta name="description" content="Parse unstructured Indian addresses into structured components. ML + NLP powered, supports Hindi and English.">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Indian Address Parser">
 <meta name="twitter:description" content="ML + NLP system for parsing Indian addresses into structured components.">
+<meta name="twitter:image" content="https://addressparser.kushagragolash.tech/static/og-preview.jpeg">
 """
 
 with gr.Blocks(title="Indian Address Parser", css=CUSTOM_CSS, head=OG_HEAD) as demo:
