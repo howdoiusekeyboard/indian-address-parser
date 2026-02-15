@@ -1,5 +1,5 @@
 # Indian Address Parser
-
+.
 NLP system for parsing unstructured Indian addresses into structured components. Built with IndicBERTv2-CRF.
 
 [![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
