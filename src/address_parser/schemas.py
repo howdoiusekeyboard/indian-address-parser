@@ -25,13 +25,27 @@ ENTITY_LABELS = [
 
 # Type-safe entity label literal
 EntityLabel = Literal[
-    "AREA", "SUBAREA", "HOUSE_NUMBER", "SECTOR", "GALI",
-    "COLONY", "BLOCK", "CAMP", "POLE", "KHASRA",
-    "FLOOR", "PLOT", "PINCODE", "CITY", "STATE",
+    "AREA",
+    "SUBAREA",
+    "HOUSE_NUMBER",
+    "SECTOR",
+    "GALI",
+    "COLONY",
+    "BLOCK",
+    "CAMP",
+    "POLE",
+    "KHASRA",
+    "FLOOR",
+    "PLOT",
+    "PINCODE",
+    "CITY",
+    "STATE",
 ]
 
 # BIO tag generation
-BIO_LABELS = ["O"] + [f"B-{label}" for label in ENTITY_LABELS] + [f"I-{label}" for label in ENTITY_LABELS]
+BIO_LABELS = (
+    ["O"] + [f"B-{label}" for label in ENTITY_LABELS] + [f"I-{label}" for label in ENTITY_LABELS]
+)
 LABEL2ID = {label: i for i, label in enumerate(BIO_LABELS)}
 ID2LABEL = {i: label for i, label in enumerate(BIO_LABELS)}
 
@@ -70,8 +84,20 @@ class ParsedAddress(BaseModel):
                 "raw_address": "PLOT NO752 FIRST FLOOR, BLOCK H-3, NEW DELHI, 110041",
                 "normalized_address": "PLOT NO752 FIRST FLOOR BLOCK H-3 NEW DELHI 110041",
                 "entities": [
-                    {"label": "HOUSE_NUMBER", "value": "PLOT NO752", "start": 0, "end": 10, "confidence": 0.95},
-                    {"label": "FLOOR", "value": "FIRST FLOOR", "start": 11, "end": 22, "confidence": 0.98},
+                    {
+                        "label": "HOUSE_NUMBER",
+                        "value": "PLOT NO752",
+                        "start": 0,
+                        "end": 10,
+                        "confidence": 0.95,
+                    },
+                    {
+                        "label": "FLOOR",
+                        "value": "FIRST FLOOR",
+                        "start": 11,
+                        "end": 22,
+                        "confidence": 0.98,
+                    },
                 ],
                 "house_number": "PLOT NO752",
                 "floor": "FIRST FLOOR",

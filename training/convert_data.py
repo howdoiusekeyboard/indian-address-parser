@@ -6,11 +6,10 @@ into a format suitable for training transformer-based NER models.
 """
 
 import json
-import re
-from pathlib import Path
-from typing import Optional
-from dataclasses import dataclass, field
 import random
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
 
 # Label normalization mapping
 LABEL_NORMALIZE = {
@@ -65,6 +64,7 @@ LABEL_NORMALIZE = {
 @dataclass
 class Token:
     """A single token with its label."""
+
     text: str
     label: str = "O"
     start: int = 0
@@ -74,6 +74,7 @@ class Token:
 @dataclass
 class AnnotatedSample:
     """A single annotated address sample."""
+
     id: int
     text: str
     tokens: list[Token] = field(default_factory=list)
@@ -90,7 +91,7 @@ def simple_tokenize(text: str) -> list[tuple[str, int, int]]:
     """
     tokens = []
     # Pattern to split on whitespace and keep punctuation separate
-    pattern = r'(\s+|[,./\-()])'
+    pattern = r"(\s+|[,./\-()])"
 
     pos = 0
     parts = re.split(pattern, text)
@@ -115,9 +116,7 @@ def simple_tokenize(text: str) -> list[tuple[str, int, int]]:
 
 
 def assign_bio_labels(
-    text: str,
-    annotations: list[dict],
-    tokens: list[tuple[str, int, int]]
+    text: str, annotations: list[dict], tokens: list[tuple[str, int, int]]
 ) -> list[Token]:
     """
     Assign BIO labels to tokens based on character-level annotations.
@@ -203,7 +202,7 @@ def add_pincode_labels(samples: list[AnnotatedSample]) -> list[AnnotatedSample]:
     """
     Post-process to add PINCODE labels for 6-digit patterns.
     """
-    pincode_pattern = re.compile(r'\b[1-9]\d{5}\b')
+    pincode_pattern = re.compile(r"\b[1-9]\d{5}\b")
 
     for sample in samples:
         for token in sample.tokens:
@@ -234,10 +233,7 @@ def add_city_state_labels(samples: list[AnnotatedSample]) -> list[AnnotatedSampl
 
 
 def split_data(
-    samples: list[AnnotatedSample],
-    train_ratio: float = 0.8,
-    val_ratio: float = 0.1,
-    seed: int = 42
+    samples: list[AnnotatedSample], train_ratio: float = 0.8, val_ratio: float = 0.1, seed: int = 42
 ) -> tuple[list[AnnotatedSample], list[AnnotatedSample], list[AnnotatedSample]]:
     """
     Split data into train/val/test sets.
@@ -272,12 +268,7 @@ def save_jsonl_format(samples: list[AnnotatedSample], output_path: Path) -> None
     with open(output_path, "w", encoding="utf-8") as f:
         for sample in samples:
             tokens, labels = sample.to_bio()
-            record = {
-                "id": sample.id,
-                "text": sample.text,
-                "tokens": tokens,
-                "ner_tags": labels
-            }
+            record = {"id": sample.id, "text": sample.text, "tokens": tokens, "ner_tags": labels}
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
@@ -285,14 +276,16 @@ def main():
     """Main conversion pipeline."""
     # Paths
     project_root = Path(__file__).parent.parent
-    input_path = project_root.parent / "2 broken versions of the same project" / "v2" / "labels.json"
+    input_path = (
+        project_root.parent / "2 broken versions of the same project" / "v2" / "labels.json"
+    )
     output_dir = project_root / "data" / "processed"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Loading data from {input_path}")
 
     # Load Label Studio data
-    with open(input_path, "r", encoding="utf-8") as f:
+    with open(input_path, encoding="utf-8") as f:
         data = json.load(f)
 
     print(f"Loaded {len(data)} annotated samples")
@@ -319,10 +312,11 @@ def main():
 
     # Save label info
     from address_parser.schemas import BIO_LABELS, LABEL2ID
+
     label_info = {
         "labels": BIO_LABELS,
         "label2id": LABEL2ID,
-        "id2label": {v: k for k, v in LABEL2ID.items()}
+        "id2label": {v: k for k, v in LABEL2ID.items()},
     }
     with open(output_dir / "label_info.json", "w") as f:
         json.dump(label_info, f, indent=2)

@@ -97,7 +97,9 @@ ENTITY_LABELS = [
 ]
 
 # Generate BIO labels
-BIO_LABELS = ["O"] + [f"B-{label}" for label in ENTITY_LABELS] + [f"I-{label}" for label in ENTITY_LABELS]
+BIO_LABELS = (
+    ["O"] + [f"B-{label}" for label in ENTITY_LABELS] + [f"I-{label}" for label in ENTITY_LABELS]
+)
 LABEL2ID = {label: i for i, label in enumerate(BIO_LABELS)}
 ID2LABEL = {i: label for i, label in enumerate(BIO_LABELS)}
 NUM_LABELS = len(BIO_LABELS)

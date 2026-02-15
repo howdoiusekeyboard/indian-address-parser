@@ -1,16 +1,18 @@
 # Indian Address Parser - Multi-stage Docker build
 # Bakes model from HuggingFace Hub into image
 
-# Stage 1: Build dependencies with uv
+# Stage 1: Build dependencies with uv (locked for reproducibility)
 FROM python:3.14-slim AS builder
 
 WORKDIR /app
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-COPY pyproject.toml README.md ./
-COPY src/ ./src/
+COPY --from=ghcr.io/astral-sh/uv:0.10 /uv /usr/local/bin/uv
 
-RUN uv venv /opt/venv && \
-    VIRTUAL_ENV=/opt/venv uv pip install --python /opt/venv/bin/python ".[api,demo]"
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=0
+
+# Install deps from lockfile for reproducible builds
+COPY pyproject.toml uv.lock README.md ./
+COPY src/ ./src/
+RUN uv sync --locked --extra api --extra demo --no-dev
 
 # Stage 2: Runtime
 FROM python:3.14-slim
@@ -18,8 +20,8 @@ FROM python:3.14-slim
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 WORKDIR /app
 
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH" \
+COPY --from=builder /app/.venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
     MODEL_PATH=/app/models/address_ner_v4 \

@@ -11,86 +11,218 @@ import json
 import random
 from pathlib import Path
 
-
 # Known localities for training
 LOCALITIES = [
     # South Delhi
-    "LAJPAT NAGAR", "MALVIYA NAGAR", "HAUZ KHAS", "GREEN PARK",
-    "GREATER KAILASH", "DEFENCE COLONY", "SOUTH EXTENSION", "KALKAJI",
-    "NEHRU PLACE", "OKHLA", "JASOLA", "SARITA VIHAR", "VASANT KUNJ",
-
+    "LAJPAT NAGAR",
+    "MALVIYA NAGAR",
+    "HAUZ KHAS",
+    "GREEN PARK",
+    "GREATER KAILASH",
+    "DEFENCE COLONY",
+    "SOUTH EXTENSION",
+    "KALKAJI",
+    "NEHRU PLACE",
+    "OKHLA",
+    "JASOLA",
+    "SARITA VIHAR",
+    "VASANT KUNJ",
     # North Delhi
-    "CIVIL LINES", "MODEL TOWN", "MUKHERJEE NAGAR", "KAMLA NAGAR",
-    "ASHOK VIHAR", "SHALIMAR BAGH", "PITAMPURA", "ROHINI",
-
+    "CIVIL LINES",
+    "MODEL TOWN",
+    "MUKHERJEE NAGAR",
+    "KAMLA NAGAR",
+    "ASHOK VIHAR",
+    "SHALIMAR BAGH",
+    "PITAMPURA",
+    "ROHINI",
     # East Delhi
-    "PREET VIHAR", "MAYUR VIHAR", "PATPARGANJ", "LAKSHMI NAGAR",
-    "GANDHI NAGAR", "DILSHAD GARDEN", "ANAND VIHAR", "SHAHDARA",
-
+    "PREET VIHAR",
+    "MAYUR VIHAR",
+    "PATPARGANJ",
+    "LAKSHMI NAGAR",
+    "GANDHI NAGAR",
+    "DILSHAD GARDEN",
+    "ANAND VIHAR",
+    "SHAHDARA",
     # West Delhi
-    "JANAKPURI", "DWARKA", "PALAM", "UTTAM NAGAR", "VIKASPURI",
-    "TILAK NAGAR", "RAJOURI GARDEN", "PUNJABI BAGH", "PASCHIM VIHAR",
-    "MUNDKA", "NANGLOI", "NAJAFGARH",
-
+    "JANAKPURI",
+    "DWARKA",
+    "PALAM",
+    "UTTAM NAGAR",
+    "VIKASPURI",
+    "TILAK NAGAR",
+    "RAJOURI GARDEN",
+    "PUNJABI BAGH",
+    "PASCHIM VIHAR",
+    "MUNDKA",
+    "NANGLOI",
+    "NAJAFGARH",
     # Central Delhi
-    "CONNAUGHT PLACE", "KAROL BAGH", "PAHARGANJ", "DARYAGANJ",
-    "RAJENDER NAGAR", "PATEL NAGAR", "KIRTI NAGAR",
+    "CONNAUGHT PLACE",
+    "KAROL BAGH",
+    "PAHARGANJ",
+    "DARYAGANJ",
+    "RAJENDER NAGAR",
+    "PATEL NAGAR",
+    "KIRTI NAGAR",
 ]
 
 AREAS = [
-    "SOUTH DELHI", "NORTH DELHI", "EAST DELHI", "WEST DELHI",
-    "CENTRAL DELHI", "SOUTH WEST DELHI", "NORTH WEST DELHI",
+    "SOUTH DELHI",
+    "NORTH DELHI",
+    "EAST DELHI",
+    "WEST DELHI",
+    "CENTRAL DELHI",
+    "SOUTH WEST DELHI",
+    "NORTH WEST DELHI",
     "OUTER DELHI",
 ]
 
 COLONIES = [
-    "PALAM COLONY", "RAJ NAGAR", "VIJAY ENCLAVE", "SADH NAGAR",
-    "DURGA PARK", "SWARN PARK", "CHANCHAL PARK", "KAUNWAR SINGH NAGAR",
-    "BABA HARI DAS COLONY", "AMBICA VIHAR", "SHIV PURI", "BUDH VIHAR",
+    "PALAM COLONY",
+    "RAJ NAGAR",
+    "VIJAY ENCLAVE",
+    "SADH NAGAR",
+    "DURGA PARK",
+    "SWARN PARK",
+    "CHANCHAL PARK",
+    "KAUNWAR SINGH NAGAR",
+    "BABA HARI DAS COLONY",
+    "AMBICA VIHAR",
+    "SHIV PURI",
+    "BUDH VIHAR",
 ]
 
 HOUSE_PATTERNS = [
-    "H.NO. {num}", "HOUSE NO. {num}", "HNO {num}", "H NO {num}",
-    "PLOT NO {num}", "PLOT NO. {num}", "{num}",
-    "FLAT NO {num}", "FLAT NO. {num}", "FLAT {num}",
-    "{letter}-{num}", "{letter}/{num}",
-    "RZ-{num}", "WZ-{num}", "RZ {num}", "WZ {num}",
+    "H.NO. {num}",
+    "HOUSE NO. {num}",
+    "HNO {num}",
+    "H NO {num}",
+    "PLOT NO {num}",
+    "PLOT NO. {num}",
+    "{num}",
+    "FLAT NO {num}",
+    "FLAT NO. {num}",
+    "FLAT {num}",
+    "{letter}-{num}",
+    "{letter}/{num}",
+    "RZ-{num}",
+    "WZ-{num}",
+    "RZ {num}",
+    "WZ {num}",
 ]
 
 FLOOR_OPTIONS = [
-    "GROUND FLOOR", "FIRST FLOOR", "SECOND FLOOR", "THIRD FLOOR",
-    "GF", "FF", "SF", "TF", "1ST FLOOR", "2ND FLOOR", "3RD FLOOR",
+    "GROUND FLOOR",
+    "FIRST FLOOR",
+    "SECOND FLOOR",
+    "THIRD FLOOR",
+    "GF",
+    "FF",
+    "SF",
+    "TF",
+    "1ST FLOOR",
+    "2ND FLOOR",
+    "3RD FLOOR",
 ]
 
 GALI_PATTERNS = [
-    "GALI NO. {num}", "GALI NO {num}", "GALI {num}",
-    "LANE NO. {num}", "LANE {num}",
+    "GALI NO. {num}",
+    "GALI NO {num}",
+    "GALI {num}",
+    "LANE NO. {num}",
+    "LANE {num}",
 ]
 
 BLOCK_PATTERNS = [
-    "BLOCK {letter}", "BLOCK {letter}-{num}", "BLK {letter}",
+    "BLOCK {letter}",
+    "BLOCK {letter}-{num}",
+    "BLK {letter}",
 ]
 
 SECTOR_PATTERNS = [
-    "SECTOR {num}", "SEC {num}", "SECTOR-{num}",
+    "SECTOR {num}",
+    "SEC {num}",
+    "SECTOR-{num}",
 ]
 
 PINCODES = [
-    "110001", "110002", "110003", "110005", "110006",
-    "110007", "110008", "110009", "110010", "110011",
-    "110015", "110016", "110017", "110019", "110020",
-    "110021", "110022", "110024", "110025", "110026",
-    "110027", "110028", "110029", "110030", "110031",
-    "110041", "110042", "110043", "110044", "110045",
-    "110046", "110047", "110048", "110049", "110051",
-    "110052", "110053", "110054", "110055", "110056",
-    "110057", "110058", "110059", "110060", "110061",
-    "110062", "110063", "110064", "110065", "110066",
-    "110067", "110068", "110070", "110071", "110072",
-    "110073", "110074", "110075", "110076", "110077",
-    "110078", "110080", "110081", "110082", "110083",
-    "110084", "110085", "110086", "110087", "110088",
-    "110091", "110092", "110093", "110094", "110095",
+    "110001",
+    "110002",
+    "110003",
+    "110005",
+    "110006",
+    "110007",
+    "110008",
+    "110009",
+    "110010",
+    "110011",
+    "110015",
+    "110016",
+    "110017",
+    "110019",
+    "110020",
+    "110021",
+    "110022",
+    "110024",
+    "110025",
+    "110026",
+    "110027",
+    "110028",
+    "110029",
+    "110030",
+    "110031",
+    "110041",
+    "110042",
+    "110043",
+    "110044",
+    "110045",
+    "110046",
+    "110047",
+    "110048",
+    "110049",
+    "110051",
+    "110052",
+    "110053",
+    "110054",
+    "110055",
+    "110056",
+    "110057",
+    "110058",
+    "110059",
+    "110060",
+    "110061",
+    "110062",
+    "110063",
+    "110064",
+    "110065",
+    "110066",
+    "110067",
+    "110068",
+    "110070",
+    "110071",
+    "110072",
+    "110073",
+    "110074",
+    "110075",
+    "110076",
+    "110077",
+    "110078",
+    "110080",
+    "110081",
+    "110082",
+    "110083",
+    "110084",
+    "110085",
+    "110086",
+    "110087",
+    "110088",
+    "110091",
+    "110092",
+    "110093",
+    "110094",
+    "110095",
     "110096",
 ]
 
@@ -223,7 +355,7 @@ def save_jsonl(samples, path):
 def load_jsonl(path):
     """Load samples from JSONL file."""
     samples = []
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             samples.append(json.loads(line.strip()))
     return samples
@@ -246,8 +378,12 @@ def main():
         color=True,
         suggest_on_error=True,
     )
-    parser.add_argument("--n-train", type=int, default=1000, help="Number of synthetic training samples")
-    parser.add_argument("--n-val", type=int, default=50, help="Number of synthetic validation samples")
+    parser.add_argument(
+        "--n-train", type=int, default=1000, help="Number of synthetic training samples"
+    )
+    parser.add_argument(
+        "--n-val", type=int, default=50, help="Number of synthetic validation samples"
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--data-dir", default="data/processed", help="Data directory")
     args = parser.parse_args()
@@ -320,8 +456,10 @@ def main():
         print(f"  Text:   {sample['text']}")
         print(f"  Tokens: {sample['tokens'][:10]}...")
         print(f"  Labels: {sample['ner_tags'][:10]}...")
-        aligned = len(sample['tokens']) == len(sample['ner_tags'])
-        print(f"  Aligned: {aligned} ({len(sample['tokens'])} tokens, {len(sample['ner_tags'])} labels)")
+        aligned = len(sample["tokens"]) == len(sample["ner_tags"])
+        print(
+            f"  Aligned: {aligned} ({len(sample['tokens'])} tokens, {len(sample['ner_tags'])} labels)"
+        )
         print()
 
 

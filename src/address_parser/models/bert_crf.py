@@ -112,10 +112,7 @@ class CRF(nn.Module):
         return self._viterbi_decode(emissions, mask)
 
     def _compute_score(
-        self,
-        emissions: torch.Tensor,
-        tags: torch.LongTensor,
-        mask: torch.BoolTensor
+        self, emissions: torch.Tensor, tags: torch.LongTensor, mask: torch.BoolTensor
     ) -> torch.Tensor:
         """Compute the score of a given tag sequence."""
         seq_length, batch_size = tags.shape
@@ -144,11 +141,7 @@ class CRF(nn.Module):
 
         return score
 
-    def _compute_normalizer(
-        self,
-        emissions: torch.Tensor,
-        mask: torch.BoolTensor
-    ) -> torch.Tensor:
+    def _compute_normalizer(self, emissions: torch.Tensor, mask: torch.BoolTensor) -> torch.Tensor:
         """Compute log-sum-exp of all possible tag sequences (partition function)."""
         seq_length = emissions.shape[0]
 
@@ -174,11 +167,7 @@ class CRF(nn.Module):
 
         return torch.logsumexp(score, dim=1)
 
-    def _viterbi_decode(
-        self,
-        emissions: torch.Tensor,
-        mask: torch.BoolTensor
-    ) -> list[list[int]]:
+    def _viterbi_decode(self, emissions: torch.Tensor, mask: torch.BoolTensor) -> list[list[int]]:
         """Viterbi decoding to find best tag sequence."""
         seq_length, batch_size, num_tags = emissions.shape
 
@@ -212,7 +201,7 @@ class CRF(nn.Module):
             best_tags = [best_last_tag.item()]
 
             # Backtrack through history
-            for hist in reversed(history[:seq_ends[batch_idx]]):
+            for hist in reversed(history[: seq_ends[batch_idx]]):
                 best_last_tag = hist[batch_idx][best_tags[-1]]
                 best_tags.append(best_last_tag.item())
 

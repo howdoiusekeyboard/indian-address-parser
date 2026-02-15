@@ -20,135 +20,240 @@ class RuleBasedRefiner:
 
     # Regex patterns for deterministic entities
     PATTERNS = {
-        "PINCODE": re.compile(r'\b[1-9]\d{5}\b'),
+        "PINCODE": re.compile(r"\b[1-9]\d{5}\b"),
         "KHASRA": re.compile(
-            r'\b(?:KH\.?\s*(?:NO\.?)?\s*|KHASRA\s*(?:NO\.?)?\s*)[\d/]+(?:[/-]\d+)*\b',
-            re.IGNORECASE
+            r"\b(?:KH\.?\s*(?:NO\.?)?\s*|KHASRA\s*(?:NO\.?)?\s*)[\d/]+(?:[/-]\d+)*\b", re.IGNORECASE
         ),
         # PLOT - separate from HOUSE_NUMBER for better disambiguation
         "PLOT": re.compile(
-            r'\b(?:PLOT|PLT|P\.?)(?:\s*NO\.?|\s*#)?\s*[A-Z]?\d+[A-Z]?(?:[-/]\d+)*\b',
-            re.IGNORECASE
+            r"\b(?:PLOT|PLT|P\.?)(?:\s*NO\.?|\s*#)?\s*[A-Z]?\d+[A-Z]?(?:[-/]\d+)*\b", re.IGNORECASE
         ),
         "HOUSE_NUMBER": re.compile(
-            r'\b(?:H\.?\s*(?:NO\.?)?\s*|HOUSE\s*(?:NO\.?)?\s*|HNO\s*|FLAT\s*(?:NO\.?)?\s*)?[A-Z]?\d+[A-Z]?(?:[-/]\d+)*\b',
-            re.IGNORECASE
+            r"\b(?:H\.?\s*(?:NO\.?)?\s*|HOUSE\s*(?:NO\.?)?\s*|HNO\s*|FLAT\s*(?:NO\.?)?\s*)?[A-Z]?\d+[A-Z]?(?:[-/]\d+)*\b",
+            re.IGNORECASE,
         ),
         "FLOOR": re.compile(
-            r'\b(?:GROUND|FIRST|SECOND|THIRD|FOURTH|FIFTH|1ST|2ND|3RD|4TH|5TH|GF|FF|SF|TF|G/F|F/F|S/F|BASEMENT|LOWER\s+GROUND|UPPER\s+GROUND)?\s*(?:FLOOR|FLR)?\b',
-            re.IGNORECASE
+            r"\b(?:GROUND|FIRST|SECOND|THIRD|FOURTH|FIFTH|1ST|2ND|3RD|4TH|5TH|GF|FF|SF|TF|G/F|F/F|S/F|BASEMENT|LOWER\s+GROUND|UPPER\s+GROUND)?\s*(?:FLOOR|FLR)?\b",
+            re.IGNORECASE,
         ),
-        "BLOCK": re.compile(
-            r'\b(?:BLOCK|BLK|BL|B)[-\s]?[A-Z]?[-]?[A-Z0-9]+\b',
-            re.IGNORECASE
-        ),
-        "SECTOR": re.compile(
-            r'\b(?:SECTOR|SEC)[-\s]?\d+[A-Z]?\b',
-            re.IGNORECASE
-        ),
+        "BLOCK": re.compile(r"\b(?:BLOCK|BLK|BL|B)[-\s]?[A-Z]?[-]?[A-Z0-9]+\b", re.IGNORECASE),
+        "SECTOR": re.compile(r"\b(?:SECTOR|SEC)[-\s]?\d+[A-Z]?\b", re.IGNORECASE),
         # GALI - expanded with more variations
         "GALI": re.compile(
-            r'\b(?:GALI|GALLI|LANE|STREET|ST\.|G\.?\s*NO\.?)\s*(?:NO\.?)?\s*\d+[A-Z]?\b',
-            re.IGNORECASE
+            r"\b(?:GALI|GALLI|LANE|STREET|ST\.|G\.?\s*NO\.?)\s*(?:NO\.?)?\s*\d+[A-Z]?\b",
+            re.IGNORECASE,
         ),
         # COLONY - suffix-based detection
         "COLONY": re.compile(
-            r'\b[A-Z][A-Z\s]+(?:NAGAR|VIHAR|COLONY|ENCLAVE|PARK|GARDEN|PURI|BAGH|KUNJ|EXTENSION|EXTN|PHASE)\b',
-            re.IGNORECASE
+            r"\b[A-Z][A-Z\s]+(?:NAGAR|VIHAR|COLONY|ENCLAVE|PARK|GARDEN|PURI|BAGH|KUNJ|EXTENSION|EXTN|PHASE)\b",
+            re.IGNORECASE,
         ),
     }
 
     # Area patterns - directional areas
     AREA_PATTERNS = [
-        (re.compile(r'\bSOUTH\s+DELHI\b', re.IGNORECASE), "SOUTH DELHI"),
-        (re.compile(r'\bNORTH\s+DELHI\b', re.IGNORECASE), "NORTH DELHI"),
-        (re.compile(r'\bEAST\s+DELHI\b', re.IGNORECASE), "EAST DELHI"),
-        (re.compile(r'\bWEST\s+DELHI\b', re.IGNORECASE), "WEST DELHI"),
-        (re.compile(r'\bCENTRAL\s+DELHI\b', re.IGNORECASE), "CENTRAL DELHI"),
-        (re.compile(r'\bSOUTH\s+WEST\s+DELHI\b', re.IGNORECASE), "SOUTH WEST DELHI"),
-        (re.compile(r'\bNORTH\s+WEST\s+DELHI\b', re.IGNORECASE), "NORTH WEST DELHI"),
-        (re.compile(r'\bNORTH\s+EAST\s+DELHI\b', re.IGNORECASE), "NORTH EAST DELHI"),
-        (re.compile(r'\bSOUTH\s+EAST\s+DELHI\b', re.IGNORECASE), "SOUTH EAST DELHI"),
-        (re.compile(r'\bOUTER\s+DELHI\b', re.IGNORECASE), "OUTER DELHI"),
+        (re.compile(r"\bSOUTH\s+DELHI\b", re.IGNORECASE), "SOUTH DELHI"),
+        (re.compile(r"\bNORTH\s+DELHI\b", re.IGNORECASE), "NORTH DELHI"),
+        (re.compile(r"\bEAST\s+DELHI\b", re.IGNORECASE), "EAST DELHI"),
+        (re.compile(r"\bWEST\s+DELHI\b", re.IGNORECASE), "WEST DELHI"),
+        (re.compile(r"\bCENTRAL\s+DELHI\b", re.IGNORECASE), "CENTRAL DELHI"),
+        (re.compile(r"\bSOUTH\s+WEST\s+DELHI\b", re.IGNORECASE), "SOUTH WEST DELHI"),
+        (re.compile(r"\bNORTH\s+WEST\s+DELHI\b", re.IGNORECASE), "NORTH WEST DELHI"),
+        (re.compile(r"\bNORTH\s+EAST\s+DELHI\b", re.IGNORECASE), "NORTH EAST DELHI"),
+        (re.compile(r"\bSOUTH\s+EAST\s+DELHI\b", re.IGNORECASE), "SOUTH EAST DELHI"),
+        (re.compile(r"\bOUTER\s+DELHI\b", re.IGNORECASE), "OUTER DELHI"),
     ]
 
     # City patterns
     CITY_PATTERNS = [
-        (re.compile(r'\bNEW\s+DELHI\b', re.IGNORECASE), "NEW DELHI"),
-        (re.compile(r'\bDELHI\b', re.IGNORECASE), "DELHI"),
-        (re.compile(r'\bNOIDA\b', re.IGNORECASE), "NOIDA"),
-        (re.compile(r'\bGURUGRAM\b', re.IGNORECASE), "GURUGRAM"),
-        (re.compile(r'\bGURGAON\b', re.IGNORECASE), "GURGAON"),
-        (re.compile(r'\bFARIDABAD\b', re.IGNORECASE), "FARIDABAD"),
-        (re.compile(r'\bGHAZIABAD\b', re.IGNORECASE), "GHAZIABAD"),
+        (re.compile(r"\bNEW\s+DELHI\b", re.IGNORECASE), "NEW DELHI"),
+        (re.compile(r"\bDELHI\b", re.IGNORECASE), "DELHI"),
+        (re.compile(r"\bNOIDA\b", re.IGNORECASE), "NOIDA"),
+        (re.compile(r"\bGURUGRAM\b", re.IGNORECASE), "GURUGRAM"),
+        (re.compile(r"\bGURGAON\b", re.IGNORECASE), "GURGAON"),
+        (re.compile(r"\bFARIDABAD\b", re.IGNORECASE), "FARIDABAD"),
+        (re.compile(r"\bGHAZIABAD\b", re.IGNORECASE), "GHAZIABAD"),
     ]
 
     # State patterns
     STATE_PATTERNS = [
-        (re.compile(r'\bDELHI\b', re.IGNORECASE), "DELHI"),
-        (re.compile(r'\bHARYANA\b', re.IGNORECASE), "HARYANA"),
-        (re.compile(r'\bUTTAR\s+PRADESH\b', re.IGNORECASE), "UTTAR PRADESH"),
-        (re.compile(r'\bU\.?\s*P\.?\b'), "UTTAR PRADESH"),
+        (re.compile(r"\bDELHI\b", re.IGNORECASE), "DELHI"),
+        (re.compile(r"\bHARYANA\b", re.IGNORECASE), "HARYANA"),
+        (re.compile(r"\bUTTAR\s+PRADESH\b", re.IGNORECASE), "UTTAR PRADESH"),
+        (re.compile(r"\bU\.?\s*P\.?\b"), "UTTAR PRADESH"),
     ]
 
     # Colony/Nagar indicators
     COLONY_SUFFIXES = [
-        "NAGAR", "VIHAR", "COLONY", "ENCLAVE", "PARK", "GARDEN",
-        "PURI", "BAGH", "KUNJ", "EXTENSION", "EXTN", "PHASE",
+        "NAGAR",
+        "VIHAR",
+        "COLONY",
+        "ENCLAVE",
+        "PARK",
+        "GARDEN",
+        "PURI",
+        "BAGH",
+        "KUNJ",
+        "EXTENSION",
+        "EXTN",
+        "PHASE",
     ]
 
     # Known multi-word localities that get fragmented
     KNOWN_LOCALITIES = [
         # South Delhi
-        "LAJPAT NAGAR", "MALVIYA NAGAR", "HAUZ KHAS", "GREEN PARK",
-        "GREATER KAILASH", "DEFENCE COLONY", "SOUTH EXTENSION", "KALKAJI",
-        "NEHRU PLACE", "OKHLA", "JASOLA", "SARITA VIHAR", "VASANT KUNJ",
-        "CHITTARANJAN PARK", "SANGAM VIHAR", "GOVINDPURI", "LADO SARAI",
-        "DERA MANDI", "SATBARI", "CHATTARPUR", "MEHRAULI", "SAKET",
+        "LAJPAT NAGAR",
+        "MALVIYA NAGAR",
+        "HAUZ KHAS",
+        "GREEN PARK",
+        "GREATER KAILASH",
+        "DEFENCE COLONY",
+        "SOUTH EXTENSION",
+        "KALKAJI",
+        "NEHRU PLACE",
+        "OKHLA",
+        "JASOLA",
+        "SARITA VIHAR",
+        "VASANT KUNJ",
+        "CHITTARANJAN PARK",
+        "SANGAM VIHAR",
+        "GOVINDPURI",
+        "LADO SARAI",
+        "DERA MANDI",
+        "SATBARI",
+        "CHATTARPUR",
+        "MEHRAULI",
+        "SAKET",
         # North Delhi
-        "CIVIL LINES", "MODEL TOWN", "MUKHERJEE NAGAR", "KAMLA NAGAR",
-        "ASHOK VIHAR", "SHALIMAR BAGH", "PITAMPURA", "ROHINI",
+        "CIVIL LINES",
+        "MODEL TOWN",
+        "MUKHERJEE NAGAR",
+        "KAMLA NAGAR",
+        "ASHOK VIHAR",
+        "SHALIMAR BAGH",
+        "PITAMPURA",
+        "ROHINI",
         # East Delhi
-        "PREET VIHAR", "MAYUR VIHAR", "PATPARGANJ", "LAKSHMI NAGAR",
-        "GANDHI NAGAR", "DILSHAD GARDEN", "ANAND VIHAR", "SHAHDARA",
+        "PREET VIHAR",
+        "MAYUR VIHAR",
+        "PATPARGANJ",
+        "LAKSHMI NAGAR",
+        "GANDHI NAGAR",
+        "DILSHAD GARDEN",
+        "ANAND VIHAR",
+        "SHAHDARA",
         # West Delhi
-        "JANAKPURI", "DWARKA", "PALAM", "UTTAM NAGAR", "VIKASPURI",
-        "TILAK NAGAR", "RAJOURI GARDEN", "PUNJABI BAGH", "PASCHIM VIHAR",
-        "MUNDKA", "NANGLOI", "NAJAFGARH", "TIKRI KALAN", "NILOTHI",
+        "JANAKPURI",
+        "DWARKA",
+        "PALAM",
+        "UTTAM NAGAR",
+        "VIKASPURI",
+        "TILAK NAGAR",
+        "RAJOURI GARDEN",
+        "PUNJABI BAGH",
+        "PASCHIM VIHAR",
+        "MUNDKA",
+        "NANGLOI",
+        "NAJAFGARH",
+        "TIKRI KALAN",
+        "NILOTHI",
         # Central Delhi
-        "CONNAUGHT PLACE", "KAROL BAGH", "PAHARGANJ", "DARYAGANJ",
-        "RAJENDER NAGAR", "PATEL NAGAR", "KIRTI NAGAR", "LODHI ROAD",
-        "GOLF LINKS", "CHANDNI CHOWK", "SADAR BAZAAR", "KASHMERE GATE",
+        "CONNAUGHT PLACE",
+        "KAROL BAGH",
+        "PAHARGANJ",
+        "DARYAGANJ",
+        "RAJENDER NAGAR",
+        "PATEL NAGAR",
+        "KIRTI NAGAR",
+        "LODHI ROAD",
+        "GOLF LINKS",
+        "CHANDNI CHOWK",
+        "SADAR BAZAAR",
+        "KASHMERE GATE",
         # Colonies (with -NAGAR suffix)
-        "RAJ NAGAR", "PREM NAGAR", "SHIV NAGAR", "HARI NAGAR", "KRISHNA NAGAR",
-        "GANESH NAGAR", "RAM NAGAR", "VIJAY NAGAR", "JAI NAGAR", "SADH NAGAR",
-        "KAUNWAR SINGH NAGAR", "BALJIT NAGAR", "PANDAV NAGAR", "SUNDER NAGAR",
-        "SANT NAGAR", "DEV NAGAR", "GURU NAGAR", "MOHAN NAGAR", "INDRA NAGAR",
+        "RAJ NAGAR",
+        "PREM NAGAR",
+        "SHIV NAGAR",
+        "HARI NAGAR",
+        "KRISHNA NAGAR",
+        "GANESH NAGAR",
+        "RAM NAGAR",
+        "VIJAY NAGAR",
+        "JAI NAGAR",
+        "SADH NAGAR",
+        "KAUNWAR SINGH NAGAR",
+        "BALJIT NAGAR",
+        "PANDAV NAGAR",
+        "SUNDER NAGAR",
+        "SANT NAGAR",
+        "DEV NAGAR",
+        "GURU NAGAR",
+        "MOHAN NAGAR",
+        "INDRA NAGAR",
         "AMBEDKAR NAGAR",
         # Colonies (with -VIHAR suffix)
-        "BUDH VIHAR", "AMBICA VIHAR", "NIRMAN VIHAR", "LOK VIHAR",
-        "JANATA VIHAR", "PUSHP VIHAR", "DEEP VIHAR", "RAJ VIHAR",
+        "BUDH VIHAR",
+        "AMBICA VIHAR",
+        "NIRMAN VIHAR",
+        "LOK VIHAR",
+        "JANATA VIHAR",
+        "PUSHP VIHAR",
+        "DEEP VIHAR",
+        "RAJ VIHAR",
         # Colonies (with -COLONY suffix)
-        "PALAM COLONY", "FRIENDS COLONY", "NEW FRIENDS COLONY",
-        "BABA HARI DAS COLONY", "TAGORE GARDEN COLONY", "MOTI BAGH COLONY",
-        "GULABI BAGH COLONY", "SHADIPUR COLONY", "PANCHSHEEL COLONY",
-        "GOLF LINKS COLONY", "JANGPURA EXTENSION COLONY", "LODHI COLONY",
+        "PALAM COLONY",
+        "FRIENDS COLONY",
+        "NEW FRIENDS COLONY",
+        "BABA HARI DAS COLONY",
+        "TAGORE GARDEN COLONY",
+        "MOTI BAGH COLONY",
+        "GULABI BAGH COLONY",
+        "SHADIPUR COLONY",
+        "PANCHSHEEL COLONY",
+        "GOLF LINKS COLONY",
+        "JANGPURA EXTENSION COLONY",
+        "LODHI COLONY",
         # Colonies (with -ENCLAVE suffix)
-        "VIJAY ENCLAVE", "PANCHSHEEL ENCLAVE", "SAINIK ENCLAVE",
-        "SHALIMAR ENCLAVE", "MALVIYA ENCLAVE", "GREATER KAILASH ENCLAVE",
-        "NEHRU ENCLAVE", "CHITTARANJAN ENCLAVE", "SAKET ENCLAVE",
+        "VIJAY ENCLAVE",
+        "PANCHSHEEL ENCLAVE",
+        "SAINIK ENCLAVE",
+        "SHALIMAR ENCLAVE",
+        "MALVIYA ENCLAVE",
+        "GREATER KAILASH ENCLAVE",
+        "NEHRU ENCLAVE",
+        "CHITTARANJAN ENCLAVE",
+        "SAKET ENCLAVE",
         # Colonies (with -PARK suffix)
-        "DURGA PARK", "SWARN PARK", "CHANCHAL PARK", "DEER PARK",
-        "KRISHNA PARK", "SHANTI PARK", "RAJOURI PARK", "TILAK PARK",
-        "SUBHASH PARK", "NEHRU PARK", "INDIRA PARK",
+        "DURGA PARK",
+        "SWARN PARK",
+        "CHANCHAL PARK",
+        "DEER PARK",
+        "KRISHNA PARK",
+        "SHANTI PARK",
+        "RAJOURI PARK",
+        "TILAK PARK",
+        "SUBHASH PARK",
+        "NEHRU PARK",
+        "INDIRA PARK",
         # Colonies (with -BAGH suffix)
-        "GULABI BAGH", "KIRTI BAGH", "ASHOK BAGH", "PREM BAGH",
+        "GULABI BAGH",
+        "KIRTI BAGH",
+        "ASHOK BAGH",
+        "PREM BAGH",
         # Colonies (with -PURI suffix)
-        "KHIRKI PURI", "MADANGIR PURI", "SANGAM PURI", "SHIV PURI",
-        "RAM PURI", "HARI PURI", "GANESH PURI",
+        "KHIRKI PURI",
+        "MADANGIR PURI",
+        "SANGAM PURI",
+        "SHIV PURI",
+        "RAM PURI",
+        "HARI PURI",
+        "GANESH PURI",
         # Extensions
-        "JANGPURA EXTENSION", "LAJPAT NAGAR EXTENSION",
-        "SAFDARJUNG EXTENSION", "GREATER KAILASH EXTENSION", "KALKAJI EXTENSION",
+        "JANGPURA EXTENSION",
+        "LAJPAT NAGAR EXTENSION",
+        "SAFDARJUNG EXTENSION",
+        "GREATER KAILASH EXTENSION",
+        "KALKAJI EXTENSION",
     ]
 
     def __init__(self, use_gazetteer: bool = True):
@@ -160,11 +265,7 @@ class RuleBasedRefiner:
         """
         self.gazetteer = DelhiGazetteer() if use_gazetteer else None
 
-    def refine(
-        self,
-        text: str,
-        entities: list[AddressEntity]
-    ) -> list[AddressEntity]:
+    def refine(self, text: str, entities: list[AddressEntity]) -> list[AddressEntity]:
         """
         Refine entity predictions.
 
@@ -204,9 +305,7 @@ class RuleBasedRefiner:
         return refined
 
     def _fix_known_localities(
-        self,
-        text: str,
-        entities: list[AddressEntity]
+        self, text: str, entities: list[AddressEntity]
     ) -> list[AddressEntity]:
         """Fix fragmented known localities using gazetteer lookup."""
         text_upper = text.upper()
@@ -222,13 +321,11 @@ class RuleBasedRefiner:
                 if pos == -1:
                     break
                 end = pos + len(locality)
-                locality_entities.append(AddressEntity(
-                    label="SUBAREA",
-                    value=text[pos:end],
-                    start=pos,
-                    end=end,
-                    confidence=0.95
-                ))
+                locality_entities.append(
+                    AddressEntity(
+                        label="SUBAREA", value=text[pos:end], start=pos, end=end, confidence=0.95
+                    )
+                )
                 used_ranges.append((pos, end))
                 idx = end
 
@@ -238,26 +335,20 @@ class RuleBasedRefiner:
             if match:
                 start, end = match.start(), match.end()
                 # Check for overlap with existing ranges
-                overlaps = any(
-                    not (end <= s or start >= e)
-                    for s, e in used_ranges
-                )
+                overlaps = any(not (end <= s or start >= e) for s, e in used_ranges)
                 if not overlaps:
-                    locality_entities.append(AddressEntity(
-                        label="AREA",
-                        value=area_name,
-                        start=start,
-                        end=end,
-                        confidence=0.95
-                    ))
+                    locality_entities.append(
+                        AddressEntity(
+                            label="AREA", value=area_name, start=start, end=end, confidence=0.95
+                        )
+                    )
                     used_ranges.append((start, end))
 
         # Filter out original entities that overlap with found localities
         for entity in entities:
             # Check if entity overlaps with any locality range
             overlaps_locality = any(
-                not (entity.end <= start or entity.start >= end)
-                for start, end in used_ranges
+                not (entity.end <= start or entity.start >= end) for start, end in used_ranges
             )
 
             if overlaps_locality and entity.label in ("AREA", "SUBAREA", "COLONY", "CITY"):
@@ -271,19 +362,13 @@ class RuleBasedRefiner:
 
         return result
 
-    def _add_area_patterns(
-        self,
-        text: str,
-        entities: list[AddressEntity]
-    ) -> list[AddressEntity]:
+    def _add_area_patterns(self, text: str, entities: list[AddressEntity]) -> list[AddressEntity]:
         """Add area patterns like SOUTH DELHI, NORTH DELHI (already handled in _fix_known_localities)."""
         # This is now handled in _fix_known_localities to avoid duplicates
         return entities
 
     def _merge_fragmented_entities(
-        self,
-        text: str,
-        entities: list[AddressEntity]
+        self, text: str, entities: list[AddressEntity]
     ) -> list[AddressEntity]:
         """Merge adjacent entities of same type that should be together."""
         if len(entities) < 2:
@@ -311,7 +396,7 @@ class RuleBasedRefiner:
                     gap = next_ent.start - merged_end
                     if gap <= 2 and next_ent.label in ("AREA", "SUBAREA", "COLONY", "CITY"):
                         # Check if the merged text forms a known locality
-                        merged_text = text[current.start:next_ent.end].strip()
+                        merged_text = text[current.start : next_ent.end].strip()
                         if self._is_valid_merge(merged_text):
                             merged_end = next_ent.end
                             merged_confidence = max(merged_confidence, next_ent.confidence)
@@ -323,14 +408,16 @@ class RuleBasedRefiner:
 
                 # Create merged entity if we merged anything
                 if j > i + 1:
-                    merged_value = text[current.start:merged_end].strip()
-                    result.append(AddressEntity(
-                        label=current.label,
-                        value=merged_value,
-                        start=current.start,
-                        end=merged_end,
-                        confidence=merged_confidence
-                    ))
+                    merged_value = text[current.start : merged_end].strip()
+                    result.append(
+                        AddressEntity(
+                            label=current.label,
+                            value=merged_value,
+                            start=current.start,
+                            end=merged_end,
+                            confidence=merged_confidence,
+                        )
+                    )
                     i = j
                     continue
 
@@ -359,9 +446,7 @@ class RuleBasedRefiner:
         return False
 
     def _add_pattern_entities(
-        self,
-        text: str,
-        entities: list[AddressEntity]
+        self, text: str, entities: list[AddressEntity]
     ) -> list[AddressEntity]:
         """Add entities detected by regex patterns."""
         result = list(entities)
@@ -379,39 +464,45 @@ class RuleBasedRefiner:
         if "PINCODE" not in existing_labels:
             match = self.PATTERNS["PINCODE"].search(text)
             if match and not overlaps_existing(match.start(), match.end()):
-                result.append(AddressEntity(
-                    label="PINCODE",
-                    value=match.group(0),
-                    start=match.start(),
-                    end=match.end(),
-                    confidence=1.0  # Rule-based, high confidence
-                ))
+                result.append(
+                    AddressEntity(
+                        label="PINCODE",
+                        value=match.group(0),
+                        start=match.start(),
+                        end=match.end(),
+                        confidence=1.0,  # Rule-based, high confidence
+                    )
+                )
 
         # Check for PLOT (only if no PLOT already detected)
         if "PLOT" not in existing_labels:
             match = self.PATTERNS["PLOT"].search(text)
             if match and not overlaps_existing(match.start(), match.end()):
                 # Verify it's actually a PLOT pattern (has PLOT/PLT prefix)
-                if re.match(r'(?:PLOT|PLT|P\.)', match.group(0), re.IGNORECASE):
-                    result.append(AddressEntity(
-                        label="PLOT",
-                        value=match.group(0),
-                        start=match.start(),
-                        end=match.end(),
-                        confidence=0.90
-                    ))
+                if re.match(r"(?:PLOT|PLT|P\.)", match.group(0), re.IGNORECASE):
+                    result.append(
+                        AddressEntity(
+                            label="PLOT",
+                            value=match.group(0),
+                            start=match.start(),
+                            end=match.end(),
+                            confidence=0.90,
+                        )
+                    )
 
         # Check for GALI (if not detected by model)
         if "GALI" not in existing_labels:
             match = self.PATTERNS["GALI"].search(text)
             if match and not overlaps_existing(match.start(), match.end()):
-                result.append(AddressEntity(
-                    label="GALI",
-                    value=match.group(0),
-                    start=match.start(),
-                    end=match.end(),
-                    confidence=0.85
-                ))
+                result.append(
+                    AddressEntity(
+                        label="GALI",
+                        value=match.group(0),
+                        start=match.start(),
+                        end=match.end(),
+                        confidence=0.85,
+                    )
+                )
 
         # Check for COLONY using suffix pattern (if not detected)
         if "COLONY" not in existing_labels:
@@ -419,14 +510,26 @@ class RuleBasedRefiner:
             if match and not overlaps_existing(match.start(), match.end()):
                 # Verify it's not an AREA pattern (like "SOUTH DELHI")
                 value = match.group(0).upper()
-                if not any(area in value for area in ["SOUTH DELHI", "NORTH DELHI", "EAST DELHI", "WEST DELHI", "CENTRAL DELHI", "OUTER DELHI"]):
-                    result.append(AddressEntity(
-                        label="COLONY",
-                        value=match.group(0),
-                        start=match.start(),
-                        end=match.end(),
-                        confidence=0.85
-                    ))
+                if not any(
+                    area in value
+                    for area in [
+                        "SOUTH DELHI",
+                        "NORTH DELHI",
+                        "EAST DELHI",
+                        "WEST DELHI",
+                        "CENTRAL DELHI",
+                        "OUTER DELHI",
+                    ]
+                ):
+                    result.append(
+                        AddressEntity(
+                            label="COLONY",
+                            value=match.group(0),
+                            start=match.start(),
+                            end=match.end(),
+                            confidence=0.85,
+                        )
+                    )
 
         # Check for city - DELHI addresses always have DELHI as city
         has_city = any(e.label == "CITY" for e in result)
@@ -434,16 +537,14 @@ class RuleBasedRefiner:
             # If text contains DELHI anywhere, set city to DELHI
             if "DELHI" in text.upper():
                 # Find the last occurrence of DELHI (usually the city mention)
-                delhi_positions = [m.start() for m in re.finditer(r'\bDELHI\b', text.upper())]
+                delhi_positions = [m.start() for m in re.finditer(r"\bDELHI\b", text.upper())]
                 if delhi_positions:
                     pos = delhi_positions[-1]  # Use last occurrence
-                    result.append(AddressEntity(
-                        label="CITY",
-                        value="DELHI",
-                        start=pos,
-                        end=pos + 5,
-                        confidence=0.90
-                    ))
+                    result.append(
+                        AddressEntity(
+                            label="CITY", value="DELHI", start=pos, end=pos + 5, confidence=0.90
+                        )
+                    )
             else:
                 # Check other city patterns
                 for pattern, city_name in self.CITY_PATTERNS:
@@ -451,13 +552,15 @@ class RuleBasedRefiner:
                         continue  # Already handled above
                     match = pattern.search(text)
                     if match and (match.start(), match.end()) not in existing_spans:
-                        result.append(AddressEntity(
-                            label="CITY",
-                            value=city_name,
-                            start=match.start(),
-                            end=match.end(),
-                            confidence=0.95
-                        ))
+                        result.append(
+                            AddressEntity(
+                                label="CITY",
+                                value=city_name,
+                                start=match.start(),
+                                end=match.end(),
+                                confidence=0.95,
+                            )
+                        )
                         break
 
         # Check for state
@@ -466,24 +569,24 @@ class RuleBasedRefiner:
                 match = pattern.search(text)
                 if match and (match.start(), match.end()) not in existing_spans:
                     # Avoid tagging "DELHI" as state if it's already a city
-                    if state_name == "DELHI" and any(e.label == "CITY" and "DELHI" in e.value.upper() for e in result):
+                    if state_name == "DELHI" and any(
+                        e.label == "CITY" and "DELHI" in e.value.upper() for e in result
+                    ):
                         continue
-                    result.append(AddressEntity(
-                        label="STATE",
-                        value=state_name,
-                        start=match.start(),
-                        end=match.end(),
-                        confidence=0.90
-                    ))
+                    result.append(
+                        AddressEntity(
+                            label="STATE",
+                            value=state_name,
+                            start=match.start(),
+                            end=match.end(),
+                            confidence=0.90,
+                        )
+                    )
                     break
 
         return result
 
-    def _correct_boundaries(
-        self,
-        text: str,
-        entities: list[AddressEntity]
-    ) -> list[AddressEntity]:
+    def _correct_boundaries(self, text: str, entities: list[AddressEntity]) -> list[AddressEntity]:
         """Correct entity boundaries based on patterns."""
         result = []
 
@@ -517,11 +620,7 @@ class RuleBasedRefiner:
 
         return result
 
-    def _adjust_confidence(
-        self,
-        text: str,
-        entities: list[AddressEntity]
-    ) -> list[AddressEntity]:
+    def _adjust_confidence(self, text: str, entities: list[AddressEntity]) -> list[AddressEntity]:
         """Adjust confidence scores based on patterns and gazetteer."""
         result = []
 
@@ -550,10 +649,7 @@ class RuleBasedRefiner:
 
         return result
 
-    def _remove_overlaps(
-        self,
-        entities: list[AddressEntity]
-    ) -> list[AddressEntity]:
+    def _remove_overlaps(self, entities: list[AddressEntity]) -> list[AddressEntity]:
         """Remove overlapping entities, keeping higher confidence ones."""
         if not entities:
             return entities
@@ -588,10 +684,7 @@ class RuleBasedRefiner:
         # Sort by position for output
         return sorted(result, key=lambda e: e.start)
 
-    def _validate_entities(
-        self,
-        entities: list[AddressEntity]
-    ) -> list[AddressEntity]:
+    def _validate_entities(self, entities: list[AddressEntity]) -> list[AddressEntity]:
         """Validate and filter entities."""
         result = []
 
@@ -606,7 +699,7 @@ class RuleBasedRefiner:
 
             # Validate pincode format
             if entity.label == "PINCODE":
-                if not re.fullmatch(r'[1-9]\d{5}', entity.value):
+                if not re.fullmatch(r"[1-9]\d{5}", entity.value):
                     continue
                 if self.gazetteer and not self.gazetteer.validate_pincode(entity.value):
                     # Pincode outside Delhi range - reduce confidence but keep

@@ -122,7 +122,7 @@ async def health_check():
     return HealthResponse(
         status="healthy",
         model_loaded=parser is not None and parser.model is not None,
-        version="2.1.0"
+        version="2.1.0",
     )
 
 
@@ -242,10 +242,7 @@ async def parse_address_get(address: str):
 # Error handlers
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500,
-        content={"detail": f"Internal server error: {str(exc)}"}
-    )
+    return JSONResponse(status_code=500, content={"detail": f"Internal server error: {str(exc)}"})
 
 
 if __name__ == "__main__":

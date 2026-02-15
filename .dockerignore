@@ -17,7 +17,6 @@ __pycache__/
 .ruff_cache/
 .coverage
 *.pyc
-uv.lock
 .pre-commit-config.yaml
 
 # Exclude most markdown but keep README.md for pyproject.toml

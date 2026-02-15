@@ -21,37 +21,21 @@ Examples:
 
   # Use trained model
   address-parser --model ./models/address_ner_v3 "H.NO. 123, LAJPAT NAGAR"
-        """
+        """,
     )
 
+    parser.add_argument("address", nargs="?", help="Address to parse (or use --input for file)")
+    parser.add_argument("--input", "-i", help="Input file with addresses (one per line)")
+    parser.add_argument("--output", "-o", help="Output JSON file")
+    parser.add_argument("--model", "-m", help="Path to trained model directory")
     parser.add_argument(
-        "address",
-        nargs="?",
-        help="Address to parse (or use --input for file)"
-    )
-    parser.add_argument(
-        "--input", "-i",
-        help="Input file with addresses (one per line)"
-    )
-    parser.add_argument(
-        "--output", "-o",
-        help="Output JSON file"
-    )
-    parser.add_argument(
-        "--model", "-m",
-        help="Path to trained model directory"
-    )
-    parser.add_argument(
-        "--format", "-f",
+        "--format",
+        "-f",
         choices=["json", "table", "simple"],
         default="json",
-        help="Output format (default: json)"
+        help="Output format (default: json)",
     )
-    parser.add_argument(
-        "--version", "-v",
-        action="version",
-        version="indian-address-parser 2.1.0"
-    )
+    parser.add_argument("--version", "-v", action="version", version="indian-address-parser 2.1.0")
 
     args = parser.parse_args()
 

@@ -15,7 +15,9 @@ from pydantic import BaseModel
 
 # Path setup: add src to path for imports
 _app_dir = Path(__file__).parent
-sys.path.insert(0, str(_app_dir / "src" if (_app_dir / "src").exists() else _app_dir.parent / "src"))
+sys.path.insert(
+    0, str(_app_dir / "src" if (_app_dir / "src").exists() else _app_dir.parent / "src")
+)
 
 from address_parser import AddressParser, ParsedAddress
 
@@ -24,21 +26,23 @@ VERSION = "2.1.0"
 ENTITY_COLORS = {
     "HOUSE_NUMBER": "#e74c3c",  # Red
     "PLOT": "#e74c3c",
-    "FLOOR": "#1abc9c",         # Teal
-    "BLOCK": "#3498db",         # Blue
-    "SECTOR": "#27ae60",        # Green
-    "GALI": "#f39c12",          # Orange
-    "COLONY": "#9b59b6",        # Purple
-    "AREA": "#16a085",          # Dark teal
-    "SUBAREA": "#f1c40f",       # Yellow
-    "KHASRA": "#8e44ad",        # Dark purple
-    "PINCODE": "#2980b9",       # Dark blue
-    "CITY": "#e67e22",          # Dark orange
+    "FLOOR": "#1abc9c",  # Teal
+    "BLOCK": "#3498db",  # Blue
+    "SECTOR": "#27ae60",  # Green
+    "GALI": "#f39c12",  # Orange
+    "COLONY": "#9b59b6",  # Purple
+    "AREA": "#16a085",  # Dark teal
+    "SUBAREA": "#f1c40f",  # Yellow
+    "KHASRA": "#8e44ad",  # Dark purple
+    "PINCODE": "#2980b9",  # Dark blue
+    "CITY": "#e67e22",  # Dark orange
     "STATE": "#2ecc71",
 }
 
 EXAMPLES = [
-    ["PLOT NO752 FIRST FLOOR, BLOCK H-3 KH NO 24/1/3/2/2/202, KAUNWAR SINGH NAGAR NEW DELHI, DELHI, 110041"],
+    [
+        "PLOT NO752 FIRST FLOOR, BLOCK H-3 KH NO 24/1/3/2/2/202, KAUNWAR SINGH NAGAR NEW DELHI, DELHI, 110041"
+    ],
     ["H.NO. 123, GALI NO. 5, LAJPAT NAGAR, SOUTH DELHI, 110024"],
     ["FLAT NO A-501, SECTOR 15, DWARKA, NEW DELHI, 110078"],
     ["KHASRA NO 45/2, VILLAGE MUNDKA, OUTER DELHI, 110041"],
@@ -71,6 +75,7 @@ def load_parser() -> AddressParser:
 
 
 parser = load_parser()
+
 
 class ParseRequest(BaseModel):
     address: str
@@ -107,7 +112,9 @@ async def health_check() -> dict[str, Any]:
     """Health check endpoint."""
     return {
         "status": "healthy",
-        "model_loaded": parser is not None and hasattr(parser, "model") and parser.model is not None,
+        "model_loaded": parser is not None
+        and hasattr(parser, "model")
+        and parser.model is not None,
         "version": VERSION,
         "gradio_version": gr.__version__,
     }
@@ -139,7 +146,10 @@ async def api_parse_batch(request: BatchParseRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="Maximum 100 addresses per batch")
 
     start = time.perf_counter()
-    results = [format_api_result(parser.parse(addr), request.return_confidence) for addr in request.addresses]
+    results = [
+        format_api_result(parser.parse(addr), request.return_confidence)
+        for addr in request.addresses
+    ]
     total_ms = (time.perf_counter() - start) * 1000
 
     return {
@@ -171,8 +181,20 @@ def format_highlighted(result: ParsedAddress) -> dict:
 
 def format_structured(result: ParsedAddress) -> dict:
     """Format non-None fields for gr.JSON component."""
-    fields = ["house_number", "floor", "block", "sector", "gali", "colony",
-              "area", "subarea", "khasra", "pincode", "city", "state"]
+    fields = [
+        "house_number",
+        "floor",
+        "block",
+        "sector",
+        "gali",
+        "colony",
+        "area",
+        "subarea",
+        "khasra",
+        "pincode",
+        "city",
+        "state",
+    ]
     return {f: getattr(result, f) for f in fields if getattr(result, f) is not None}
 
 
@@ -208,7 +230,9 @@ def gradio_api_parse(address: str) -> dict:
 
 def gradio_api_batch(addresses: list[str]) -> list[dict]:
     """Gradio native API endpoint for batch parsing (max 100)."""
-    return [format_api_result(parser.parse(addr), include_confidence=True) for addr in addresses[:100]]
+    return [
+        format_api_result(parser.parse(addr), include_confidence=True) for addr in addresses[:100]
+    ]
 
 
 CUSTOM_CSS = """
@@ -299,10 +323,12 @@ Parse unstructured Indian addresses into structured components using **mBERT-CRF
                 outputs=[highlighted_output, entity_table, structured_output, inference_time],
             )
 
-            clear_btn.add([address_input, highlighted_output, entity_table, structured_output, inference_time])
+            clear_btn.add(
+                [address_input, highlighted_output, entity_table, structured_output, inference_time]
+            )
 
         with gr.Tab("API", id="api"):
-            gr.Markdown(f"""
+            gr.Markdown("""
 ## REST API Endpoints
 
 | Method | Endpoint | Description |
@@ -317,7 +343,7 @@ Parse unstructured Indian addresses into structured components using **mBERT-CRF
 ```bash
 curl -X POST "https://your-domain/parse" \\
   -H "Content-Type: application/json" \\
-  -d '{{"address": "B-42, Sector 15, Gurgaon"}}'
+  -d '{"address": "B-42, Sector 15, Gurgaon"}'
 ```
 """)
             gr.api(gradio_api_parse, api_name="parse")

@@ -120,6 +120,7 @@ class TestRuleBasedRefiner:
     def test_empty_value_filtering(self, refiner):
         """Test that whitespace-only values are rejected by schema validation."""
         import pytest
+
         with pytest.raises(Exception):  # Pydantic ValidationError
             AddressEntity(label="AREA", value="  ", start=0, end=2, confidence=0.9)
 
@@ -133,7 +134,9 @@ class TestPostprocessingIntegration:
 
         text = "PLOT NO752 FIRST FLOOR, BLOCK H-3 KH NO 24/1/3/2, NEW DELHI, 110041"
         entities = [
-            AddressEntity(label="HOUSE_NUMBER", value="PLOT NO752", start=0, end=10, confidence=0.9),
+            AddressEntity(
+                label="HOUSE_NUMBER", value="PLOT NO752", start=0, end=10, confidence=0.9
+            ),
             AddressEntity(label="FLOOR", value="FIRST FLOOR", start=11, end=22, confidence=0.85),
         ]
 

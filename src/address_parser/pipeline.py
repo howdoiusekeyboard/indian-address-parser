@@ -9,7 +9,8 @@ import time
 import warnings
 from pathlib import Path
 
-from transformers import AutoTokenizer, logging as hf_logging
+from transformers import AutoTokenizer
+from transformers import logging as hf_logging
 
 # Suppress false positive tokenizer warnings in transformers 4.57+
 # The Mistral regex warning is incorrectly triggered for BERT tokenizers
@@ -143,11 +144,7 @@ class AddressParser:
             ParsedAddress with extracted entities
         """
         if not address or not address.strip():
-            return ParsedAddress(
-                raw_address=address,
-                normalized_address="",
-                entities=[]
-            )
+            return ParsedAddress(raw_address=address, normalized_address="", entities=[])
 
         # Preprocessing
         normalized = self._preprocess(address)
@@ -159,11 +156,7 @@ class AddressParser:
         if self.refiner:
             entities = self.refiner.refine(normalized, entities)
 
-        return ParsedAddress(
-            raw_address=address,
-            normalized_address=normalized,
-            entities=entities
-        )
+        return ParsedAddress(raw_address=address, normalized_address=normalized, entities=entities)
 
     def parse_with_timing(self, address: str) -> ParseResponse:
         """
@@ -181,18 +174,10 @@ class AddressParser:
             result = self.parse(address)
             elapsed = (time.perf_counter() - start) * 1000
 
-            return ParseResponse(
-                success=True,
-                result=result,
-                inference_time_ms=elapsed
-            )
+            return ParseResponse(success=True, result=result, inference_time_ms=elapsed)
         except Exception as e:
             elapsed = (time.perf_counter() - start) * 1000
-            return ParseResponse(
-                success=False,
-                error=str(e),
-                inference_time_ms=elapsed
-            )
+            return ParseResponse(success=False, error=str(e), inference_time_ms=elapsed)
 
     def parse_batch(self, addresses: list[str]) -> BatchParseResponse:
         """
@@ -218,7 +203,7 @@ class AddressParser:
             success=True,
             results=results,
             total_inference_time_ms=total_time,
-            avg_inference_time_ms=avg_time
+            avg_inference_time_ms=avg_time,
         )
 
     def _preprocess(self, text: str) -> str:
@@ -257,7 +242,9 @@ class AddressParser:
         predictions = self.model.decode(
             input_ids=input_ids,
             attention_mask=attention_mask,
-        )[0]  # First (and only) sample
+        )[
+            0
+        ]  # First (and only) sample
 
         # Convert to entities
         entities = self._predictions_to_entities(
@@ -272,169 +259,212 @@ class AddressParser:
     def _extract_entities_rules_only(self, text: str) -> list[AddressEntity]:
         """Extract entities using comprehensive rules (no ML)."""
         import re
+
         entities = []
         text_upper = text.upper()
 
         # Known localities (multi-word)
         known_localities = [
-            "LAJPAT NAGAR", "MALVIYA NAGAR", "HAUZ KHAS", "GREEN PARK",
-            "GREATER KAILASH", "DEFENCE COLONY", "SOUTH EXTENSION", "KALKAJI",
-            "CIVIL LINES", "MODEL TOWN", "MUKHERJEE NAGAR", "KAMLA NAGAR",
-            "PREET VIHAR", "MAYUR VIHAR", "LAKSHMI NAGAR", "GANDHI NAGAR",
-            "JANAKPURI", "DWARKA", "UTTAM NAGAR", "TILAK NAGAR", "RAJOURI GARDEN",
-            "PUNJABI BAGH", "PASCHIM VIHAR", "KAROL BAGH", "CONNAUGHT PLACE",
-            "KAUNWAR SINGH NAGAR", "PALAM COLONY", "RAJ NAGAR", "SADH NAGAR",
-            "VIJAY ENCLAVE", "DURGA PARK", "SWARN PARK", "CHANCHAL PARK",
+            "LAJPAT NAGAR",
+            "MALVIYA NAGAR",
+            "HAUZ KHAS",
+            "GREEN PARK",
+            "GREATER KAILASH",
+            "DEFENCE COLONY",
+            "SOUTH EXTENSION",
+            "KALKAJI",
+            "CIVIL LINES",
+            "MODEL TOWN",
+            "MUKHERJEE NAGAR",
+            "KAMLA NAGAR",
+            "PREET VIHAR",
+            "MAYUR VIHAR",
+            "LAKSHMI NAGAR",
+            "GANDHI NAGAR",
+            "JANAKPURI",
+            "DWARKA",
+            "UTTAM NAGAR",
+            "TILAK NAGAR",
+            "RAJOURI GARDEN",
+            "PUNJABI BAGH",
+            "PASCHIM VIHAR",
+            "KAROL BAGH",
+            "CONNAUGHT PLACE",
+            "KAUNWAR SINGH NAGAR",
+            "PALAM COLONY",
+            "RAJ NAGAR",
+            "SADH NAGAR",
+            "VIJAY ENCLAVE",
+            "DURGA PARK",
+            "SWARN PARK",
+            "CHANCHAL PARK",
         ]
 
         for locality in known_localities:
             pos = text_upper.find(locality)
             if pos >= 0:
-                entities.append(AddressEntity(
-                    label="SUBAREA",
-                    value=text[pos:pos + len(locality)],
-                    start=pos,
-                    end=pos + len(locality),
-                    confidence=0.95
-                ))
+                entities.append(
+                    AddressEntity(
+                        label="SUBAREA",
+                        value=text[pos : pos + len(locality)],
+                        start=pos,
+                        end=pos + len(locality),
+                        confidence=0.95,
+                    )
+                )
 
         # Area patterns (directional)
         area_patterns = [
-            (r'\bSOUTH\s+DELHI\b', "SOUTH DELHI"),
-            (r'\bNORTH\s+DELHI\b', "NORTH DELHI"),
-            (r'\bEAST\s+DELHI\b', "EAST DELHI"),
-            (r'\bWEST\s+DELHI\b', "WEST DELHI"),
-            (r'\bCENTRAL\s+DELHI\b', "CENTRAL DELHI"),
-            (r'\bOUTER\s+DELHI\b', "OUTER DELHI"),
+            (r"\bSOUTH\s+DELHI\b", "SOUTH DELHI"),
+            (r"\bNORTH\s+DELHI\b", "NORTH DELHI"),
+            (r"\bEAST\s+DELHI\b", "EAST DELHI"),
+            (r"\bWEST\s+DELHI\b", "WEST DELHI"),
+            (r"\bCENTRAL\s+DELHI\b", "CENTRAL DELHI"),
+            (r"\bOUTER\s+DELHI\b", "OUTER DELHI"),
         ]
 
         for pattern, area_name in area_patterns:
             match = re.search(pattern, text_upper)
             if match:
-                entities.append(AddressEntity(
-                    label="AREA",
-                    value=area_name,
-                    start=match.start(),
-                    end=match.end(),
-                    confidence=0.95
-                ))
+                entities.append(
+                    AddressEntity(
+                        label="AREA",
+                        value=area_name,
+                        start=match.start(),
+                        end=match.end(),
+                        confidence=0.95,
+                    )
+                )
 
         # House number patterns (order matters - more specific first)
         house_patterns = [
-            r'\b(?:FLAT\s*NO\.?\s*)[A-Z]?[-]?\d+[A-Z]?(?:[-/]\d+)*\b',
-            r'\b(?:PLOT\s*NO\.?)\s*[A-Z]?\d+[A-Z]?(?:[-/]\d+)*\b',
-            r'\b(?:H\.?\s*NO\.?|HOUSE\s*NO\.?|HNO)\s*[A-Z]?\d+[A-Z]?(?:[-/]\d+)*\b',
-            r'\b[RW]Z[-\s]?[A-Z]?[-/]?\d+[A-Z]?(?:[-/]\d+)*\b',
+            r"\b(?:FLAT\s*NO\.?\s*)[A-Z]?[-]?\d+[A-Z]?(?:[-/]\d+)*\b",
+            r"\b(?:PLOT\s*NO\.?)\s*[A-Z]?\d+[A-Z]?(?:[-/]\d+)*\b",
+            r"\b(?:H\.?\s*NO\.?|HOUSE\s*NO\.?|HNO)\s*[A-Z]?\d+[A-Z]?(?:[-/]\d+)*\b",
+            r"\b[RW]Z[-\s]?[A-Z]?[-/]?\d+[A-Z]?(?:[-/]\d+)*\b",
         ]
 
         for pattern in house_patterns:
             match = re.search(pattern, text_upper)
             if match:
-                entities.append(AddressEntity(
-                    label="HOUSE_NUMBER",
-                    value=text[match.start():match.end()],
-                    start=match.start(),
-                    end=match.end(),
-                    confidence=0.90
-                ))
+                entities.append(
+                    AddressEntity(
+                        label="HOUSE_NUMBER",
+                        value=text[match.start() : match.end()],
+                        start=match.start(),
+                        end=match.end(),
+                        confidence=0.90,
+                    )
+                )
                 break  # Only first match
 
         # Floor patterns
         floor_match = re.search(
-            r'\b(?:GROUND|FIRST|SECOND|THIRD|FOURTH|1ST|2ND|3RD|4TH|GF|FF|SF|TF)\s*(?:FLOOR|FLR)?\b',
-            text_upper
+            r"\b(?:GROUND|FIRST|SECOND|THIRD|FOURTH|1ST|2ND|3RD|4TH|GF|FF|SF|TF)\s*(?:FLOOR|FLR)?\b",
+            text_upper,
         )
         if floor_match:
-            entities.append(AddressEntity(
-                label="FLOOR",
-                value=text[floor_match.start():floor_match.end()],
-                start=floor_match.start(),
-                end=floor_match.end(),
-                confidence=0.90
-            ))
+            entities.append(
+                AddressEntity(
+                    label="FLOOR",
+                    value=text[floor_match.start() : floor_match.end()],
+                    start=floor_match.start(),
+                    end=floor_match.end(),
+                    confidence=0.90,
+                )
+            )
 
         # Gali patterns
-        gali_match = re.search(r'\b(?:GALI|GALLI|LANE)\s*(?:NO\.?)?\s*\d+[A-Z]?\b', text_upper)
+        gali_match = re.search(r"\b(?:GALI|GALLI|LANE)\s*(?:NO\.?)?\s*\d+[A-Z]?\b", text_upper)
         if gali_match:
-            entities.append(AddressEntity(
-                label="GALI",
-                value=text[gali_match.start():gali_match.end()],
-                start=gali_match.start(),
-                end=gali_match.end(),
-                confidence=0.90
-            ))
+            entities.append(
+                AddressEntity(
+                    label="GALI",
+                    value=text[gali_match.start() : gali_match.end()],
+                    start=gali_match.start(),
+                    end=gali_match.end(),
+                    confidence=0.90,
+                )
+            )
 
         # Block patterns
-        block_match = re.search(r'\b(?:BLOCK|BLK|BL)\s*[A-Z]?[-]?[A-Z0-9]+\b', text_upper)
+        block_match = re.search(r"\b(?:BLOCK|BLK|BL)\s*[A-Z]?[-]?[A-Z0-9]+\b", text_upper)
         if block_match:
-            entities.append(AddressEntity(
-                label="BLOCK",
-                value=text[block_match.start():block_match.end()],
-                start=block_match.start(),
-                end=block_match.end(),
-                confidence=0.90
-            ))
+            entities.append(
+                AddressEntity(
+                    label="BLOCK",
+                    value=text[block_match.start() : block_match.end()],
+                    start=block_match.start(),
+                    end=block_match.end(),
+                    confidence=0.90,
+                )
+            )
 
         # Sector patterns
-        sector_match = re.search(r'\b(?:SECTOR|SEC)\s*\d+[A-Z]?\b', text_upper)
+        sector_match = re.search(r"\b(?:SECTOR|SEC)\s*\d+[A-Z]?\b", text_upper)
         if sector_match:
-            entities.append(AddressEntity(
-                label="SECTOR",
-                value=text[sector_match.start():sector_match.end()],
-                start=sector_match.start(),
-                end=sector_match.end(),
-                confidence=0.90
-            ))
+            entities.append(
+                AddressEntity(
+                    label="SECTOR",
+                    value=text[sector_match.start() : sector_match.end()],
+                    start=sector_match.start(),
+                    end=sector_match.end(),
+                    confidence=0.90,
+                )
+            )
 
         # Khasra patterns
         khasra_match = re.search(
-            r'\b(?:KH\.?\s*(?:NO\.?)?\s*|KHASRA\s*(?:NO\.?)?\s*)[\d/]+(?:[/-]\d+)*\b',
-            text_upper
+            r"\b(?:KH\.?\s*(?:NO\.?)?\s*|KHASRA\s*(?:NO\.?)?\s*)[\d/]+(?:[/-]\d+)*\b", text_upper
         )
         if khasra_match:
-            entities.append(AddressEntity(
-                label="KHASRA",
-                value=text[khasra_match.start():khasra_match.end()],
-                start=khasra_match.start(),
-                end=khasra_match.end(),
-                confidence=0.90
-            ))
+            entities.append(
+                AddressEntity(
+                    label="KHASRA",
+                    value=text[khasra_match.start() : khasra_match.end()],
+                    start=khasra_match.start(),
+                    end=khasra_match.end(),
+                    confidence=0.90,
+                )
+            )
 
         # Pincode (6-digit Delhi codes)
-        pincode_match = re.search(r'\b1[1][0]\d{3}\b', text)
+        pincode_match = re.search(r"\b1[1][0]\d{3}\b", text)
         if pincode_match:
-            entities.append(AddressEntity(
-                label="PINCODE",
-                value=pincode_match.group(0),
-                start=pincode_match.start(),
-                end=pincode_match.end(),
-                confidence=1.0
-            ))
+            entities.append(
+                AddressEntity(
+                    label="PINCODE",
+                    value=pincode_match.group(0),
+                    start=pincode_match.start(),
+                    end=pincode_match.end(),
+                    confidence=1.0,
+                )
+            )
 
         # City - always DELHI for Delhi addresses
         if "DELHI" in text_upper:
             # Find standalone DELHI or NEW DELHI
-            delhi_match = re.search(r'\bNEW\s+DELHI\b', text_upper)
+            delhi_match = re.search(r"\bNEW\s+DELHI\b", text_upper)
             if delhi_match:
-                entities.append(AddressEntity(
-                    label="CITY",
-                    value="NEW DELHI",
-                    start=delhi_match.start(),
-                    end=delhi_match.end(),
-                    confidence=0.95
-                ))
+                entities.append(
+                    AddressEntity(
+                        label="CITY",
+                        value="NEW DELHI",
+                        start=delhi_match.start(),
+                        end=delhi_match.end(),
+                        confidence=0.95,
+                    )
+                )
             else:
                 # Find last DELHI
-                delhi_positions = [m.start() for m in re.finditer(r'\bDELHI\b', text_upper)]
+                delhi_positions = [m.start() for m in re.finditer(r"\bDELHI\b", text_upper)]
                 if delhi_positions:
                     pos = delhi_positions[-1]
-                    entities.append(AddressEntity(
-                        label="CITY",
-                        value="DELHI",
-                        start=pos,
-                        end=pos + 5,
-                        confidence=0.90
-                    ))
+                    entities.append(
+                        AddressEntity(
+                            label="CITY", value="DELHI", start=pos, end=pos + 5, confidence=0.90
+                        )
+                    )
 
         return entities
 
@@ -449,7 +479,9 @@ class AddressParser:
         entities = []
         current_entity = None
 
-        for idx, (pred, offset, mask) in enumerate(zip(predictions, offset_mapping, attention_mask)):
+        for idx, (pred, offset, mask) in enumerate(
+            zip(predictions, offset_mapping, attention_mask)
+        ):
             if mask == 0 or offset == (0, 0):  # Skip padding and special tokens
                 continue
 
@@ -497,14 +529,14 @@ class AddressParser:
 
     def _finalize_entity(self, entity_dict: dict, text: str) -> AddressEntity:
         """Finalize entity with extracted value."""
-        value = text[entity_dict["start"]:entity_dict["end"]].strip()
+        value = text[entity_dict["start"] : entity_dict["end"]].strip()
 
         return AddressEntity(
             label=entity_dict["label"],
             value=value,
             start=entity_dict["start"],
             end=entity_dict["end"],
-            confidence=entity_dict["confidence"]
+            confidence=entity_dict["confidence"],
         )
 
 

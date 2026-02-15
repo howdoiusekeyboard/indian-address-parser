@@ -16,66 +16,187 @@ class DelhiGazetteer:
     # Major Delhi localities/areas
     LOCALITIES = {
         # South Delhi
-        "SAKET", "MALVIYA NAGAR", "HAUZ KHAS", "GREEN PARK", "GREATER KAILASH",
-        "DEFENCE COLONY", "LAJPAT NAGAR", "SOUTH EXTENSION", "CHITTARANJAN PARK",
-        "KALKAJI", "NEHRU PLACE", "OKHLA", "JASOLA", "SARITA VIHAR",
-        "ALAKNANDA", "SAFDARJUNG", "VASANT KUNJ", "MEHRAULI", "CHATTARPUR",
-
+        "SAKET",
+        "MALVIYA NAGAR",
+        "HAUZ KHAS",
+        "GREEN PARK",
+        "GREATER KAILASH",
+        "DEFENCE COLONY",
+        "LAJPAT NAGAR",
+        "SOUTH EXTENSION",
+        "CHITTARANJAN PARK",
+        "KALKAJI",
+        "NEHRU PLACE",
+        "OKHLA",
+        "JASOLA",
+        "SARITA VIHAR",
+        "ALAKNANDA",
+        "SAFDARJUNG",
+        "VASANT KUNJ",
+        "MEHRAULI",
+        "CHATTARPUR",
         # North Delhi
-        "CIVIL LINES", "MODEL TOWN", "MUKHERJEE NAGAR", "KAMLA NAGAR",
-        "SHAKTI NAGAR", "GULABI BAGH", "ASHOK VIHAR", "SHALIMAR BAGH",
-        "PITAMPURA", "ROHINI", "NARELA", "BAWANA", "ALIPUR",
-
+        "CIVIL LINES",
+        "MODEL TOWN",
+        "MUKHERJEE NAGAR",
+        "KAMLA NAGAR",
+        "SHAKTI NAGAR",
+        "GULABI BAGH",
+        "ASHOK VIHAR",
+        "SHALIMAR BAGH",
+        "PITAMPURA",
+        "ROHINI",
+        "NARELA",
+        "BAWANA",
+        "ALIPUR",
         # East Delhi
-        "PREET VIHAR", "MAYUR VIHAR", "PATPARGANJ", "PANDAV NAGAR",
-        "LAKSHMI NAGAR", "SHAKARPUR", "GEETA COLONY", "GANDHI NAGAR",
-        "DILSHAD GARDEN", "SEELAMPUR", "SHAHDARA", "ANAND VIHAR",
-
+        "PREET VIHAR",
+        "MAYUR VIHAR",
+        "PATPARGANJ",
+        "PANDAV NAGAR",
+        "LAKSHMI NAGAR",
+        "SHAKARPUR",
+        "GEETA COLONY",
+        "GANDHI NAGAR",
+        "DILSHAD GARDEN",
+        "SEELAMPUR",
+        "SHAHDARA",
+        "ANAND VIHAR",
         # West Delhi
-        "JANAKPURI", "DWARKA", "PALAM", "UTTAM NAGAR", "VIKASPURI",
-        "TILAK NAGAR", "RAJOURI GARDEN", "PUNJABI BAGH", "PASCHIM VIHAR",
-        "MEERA BAGH", "PEERAGARHI", "MUNDKA", "NANGLOI", "NAJAFGARH",
-        "BINDAPUR", "KAKROLA", "MOHAN GARDEN", "NAWADA",
-
+        "JANAKPURI",
+        "DWARKA",
+        "PALAM",
+        "UTTAM NAGAR",
+        "VIKASPURI",
+        "TILAK NAGAR",
+        "RAJOURI GARDEN",
+        "PUNJABI BAGH",
+        "PASCHIM VIHAR",
+        "MEERA BAGH",
+        "PEERAGARHI",
+        "MUNDKA",
+        "NANGLOI",
+        "NAJAFGARH",
+        "BINDAPUR",
+        "KAKROLA",
+        "MOHAN GARDEN",
+        "NAWADA",
         # Central Delhi
-        "CONNAUGHT PLACE", "KAROL BAGH", "PAHARGANJ", "DARYAGANJ",
-        "CHANDNI CHOWK", "SADAR BAZAAR", "RAJENDER NAGAR", "PATEL NAGAR",
-        "KIRTI NAGAR", "MOTIA KHAN", "ANAND PARBAT", "JHANDEWALAN",
-
+        "CONNAUGHT PLACE",
+        "KAROL BAGH",
+        "PAHARGANJ",
+        "DARYAGANJ",
+        "CHANDNI CHOWK",
+        "SADAR BAZAAR",
+        "RAJENDER NAGAR",
+        "PATEL NAGAR",
+        "KIRTI NAGAR",
+        "MOTIA KHAN",
+        "ANAND PARBAT",
+        "JHANDEWALAN",
         # New Delhi
-        "CHANAKYAPURI", "LODHI ROAD", "GOLF LINKS", "JORBAGH",
-        "SUNDAR NAGAR", "NIZAMUDDIN", "LODI COLONY", "PANDARA ROAD",
-
+        "CHANAKYAPURI",
+        "LODHI ROAD",
+        "GOLF LINKS",
+        "JORBAGH",
+        "SUNDAR NAGAR",
+        "NIZAMUDDIN",
+        "LODI COLONY",
+        "PANDARA ROAD",
         # Other areas
-        "BADARPUR", "TUGHLAKABAD", "SANGAM VIHAR", "MADANPUR KHADAR",
-        "GOVINDPURI", "AMBEDKAR NAGAR", "LADO SARAI", "TIGRI",
-        "BURARI", "KARAWAL NAGAR", "BHAJANPURA", "MUSTAFABAD",
-        "JAFFRABAD", "MAUJPUR", "GOKALPUR", "SEEMAPURI",
+        "BADARPUR",
+        "TUGHLAKABAD",
+        "SANGAM VIHAR",
+        "MADANPUR KHADAR",
+        "GOVINDPURI",
+        "AMBEDKAR NAGAR",
+        "LADO SARAI",
+        "TIGRI",
+        "BURARI",
+        "KARAWAL NAGAR",
+        "BHAJANPURA",
+        "MUSTAFABAD",
+        "JAFFRABAD",
+        "MAUJPUR",
+        "GOKALPUR",
+        "SEEMAPURI",
     }
 
     # Common colony/nagar suffixes
     NAGAR_SUFFIXES = {
-        "NAGAR", "VIHAR", "COLONY", "ENCLAVE", "EXTENSION", "PURI",
-        "PARK", "GARDEN", "BAGH", "KUNJ", "APARTMENT", "RESIDENCY",
-        "COMPLEX", "PHASE", "SECTOR", "BLOCK", "POCKET",
+        "NAGAR",
+        "VIHAR",
+        "COLONY",
+        "ENCLAVE",
+        "EXTENSION",
+        "PURI",
+        "PARK",
+        "GARDEN",
+        "BAGH",
+        "KUNJ",
+        "APARTMENT",
+        "RESIDENCY",
+        "COMPLEX",
+        "PHASE",
+        "SECTOR",
+        "BLOCK",
+        "POCKET",
     }
 
     # Common area names from the training data
     COMMON_AREAS = {
-        "KAUNWAR SINGH NAGAR", "BABA HARI DAS COLONY", "TIKARI KALA",
-        "CHANCHAL PARK", "SWARN PARK", "MUNDKA", "NANGLOI", "BAKKARWALA",
-        "MAJRA DABAS", "CHAND NAGAR", "RANHOLA", "BAPROLA", "POOTH KHURD",
-        "KIRARI", "SULTANPURI", "MANGOLPURI", "BEGUMPUR", "KADIPUR",
-        "RAMA VIHAR", "PREM NAGAR", "VIJAY PARK", "AMBICA VIHAR",
-        "SHIV PURI", "BUDH VIHAR", "POOTH KALAN", "QUTUBGARH",
-        "RANI KHERA", "SHAHABAD DAIRY", "SAMAIPUR", "JAHANGIRPURI",
-        "SANNOTH", "KANJHAWALA", "BAWANA", "ALIPUR",
+        "KAUNWAR SINGH NAGAR",
+        "BABA HARI DAS COLONY",
+        "TIKARI KALA",
+        "CHANCHAL PARK",
+        "SWARN PARK",
+        "MUNDKA",
+        "NANGLOI",
+        "BAKKARWALA",
+        "MAJRA DABAS",
+        "CHAND NAGAR",
+        "RANHOLA",
+        "BAPROLA",
+        "POOTH KHURD",
+        "KIRARI",
+        "SULTANPURI",
+        "MANGOLPURI",
+        "BEGUMPUR",
+        "KADIPUR",
+        "RAMA VIHAR",
+        "PREM NAGAR",
+        "VIJAY PARK",
+        "AMBICA VIHAR",
+        "SHIV PURI",
+        "BUDH VIHAR",
+        "POOTH KALAN",
+        "QUTUBGARH",
+        "RANI KHERA",
+        "SHAHABAD DAIRY",
+        "SAMAIPUR",
+        "JAHANGIRPURI",
+        "SANNOTH",
+        "KANJHAWALA",
+        "BAWANA",
+        "ALIPUR",
     }
 
     # Common Hindi transliterated terms
     HINDI_TERMS = {
-        "MOHALLA", "GALI", "KATRA", "BASTI", "BAZAR", "CHOWK",
-        "GANJ", "PUR", "ABAD", "GARH", "GAON", "KHERA", "KHURD", "KALAN",
+        "MOHALLA",
+        "GALI",
+        "KATRA",
+        "BASTI",
+        "BAZAR",
+        "CHOWK",
+        "GANJ",
+        "PUR",
+        "ABAD",
+        "GARH",
+        "GAON",
+        "KHERA",
+        "KHURD",
+        "KALAN",
     }
 
     def __init__(self, min_similarity: float = 80.0):
@@ -89,16 +210,10 @@ class DelhiGazetteer:
 
         # Build combined set for matching
         self.all_places = (
-            self.LOCALITIES |
-            self.COMMON_AREAS |
-            {f"{term}" for term in self.HINDI_TERMS}
+            self.LOCALITIES | self.COMMON_AREAS | {f"{term}" for term in self.HINDI_TERMS}
         )
 
-    def fuzzy_match(
-        self,
-        text: str,
-        limit: int = 3
-    ) -> list[tuple[str, float]]:
+    def fuzzy_match(self, text: str, limit: int = 3) -> list[tuple[str, float]]:
         """
         Find fuzzy matches for a text in the gazetteer.
 
@@ -112,12 +227,7 @@ class DelhiGazetteer:
         if not text or len(text) < 3:
             return []
 
-        matches = process.extract(
-            text.upper(),
-            self.all_places,
-            scorer=fuzz.ratio,
-            limit=limit
-        )
+        matches = process.extract(text.upper(), self.all_places, scorer=fuzz.ratio, limit=limit)
 
         return [(m[0], m[1]) for m in matches if m[1] >= self.min_similarity]
 

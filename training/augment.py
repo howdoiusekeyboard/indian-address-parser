@@ -17,6 +17,7 @@ from dataclasses import dataclass
 @dataclass
 class AugmentedSample:
     """An augmented training sample."""
+
     text: str
     tokens: list[str]
     labels: list[str]
@@ -167,10 +168,7 @@ class AddressAugmenter:
         elif choice == "title":
             return text.title()
         else:  # mixed
-            return "".join(
-                c.upper() if random.random() > 0.5 else c.lower()
-                for c in text
-            )
+            return "".join(c.upper() if random.random() > 0.5 else c.lower() for c in text)
 
     def _apply_typo(self, text: str) -> str:
         """Inject realistic typos."""
@@ -192,12 +190,12 @@ class AddressAugmenter:
         elif choice == "add_commas":
             # Add commas after common terms
             for term in ["FLOOR", "BLOCK", "COLONY", "NAGAR"]:
-                text = re.sub(rf'\b({term})\b(?!,)', r'\1,', text, flags=re.IGNORECASE)
+                text = re.sub(rf"\b({term})\b(?!,)", r"\1,", text, flags=re.IGNORECASE)
         elif choice == "remove_periods":
             text = text.replace(".", "")
         elif choice == "hyphen":
             # Convert space to hyphen or vice versa in patterns like "H NO" or "H-NO"
-            text = re.sub(r'(\w)\s+(\w)', r'\1-\2', text)
+            text = re.sub(r"(\w)\s+(\w)", r"\1-\2", text)
 
         return text
 
@@ -262,17 +260,13 @@ class AddressAugmenter:
             if new_labels[i].startswith("I-"):
                 entity = new_labels[i][2:]
                 # Check if previous is B- or I- of same entity
-                if i == 0 or (not new_labels[i-1].endswith(entity)):
+                if i == 0 or (not new_labels[i - 1].endswith(entity)):
                     new_labels[i] = "B-" + entity
 
         return new_tokens, new_labels
 
     def augment_bio_sample(
-        self,
-        tokens: list[str],
-        labels: list[str],
-        original_id: int,
-        n_augments: int = 2
+        self, tokens: list[str], labels: list[str], original_id: int, n_augments: int = 2
     ) -> list[AugmentedSample]:
         """
         Augment a BIO-formatted sample.
@@ -297,33 +291,35 @@ class AddressAugmenter:
 
             if len(new_tokens) == len(tokens):
                 # Same number of tokens - can reuse labels directly
-                augmented_samples.append(AugmentedSample(
-                    text=aug_text,
-                    tokens=new_tokens,
-                    labels=labels.copy(),
-                    original_id=original_id,
-                    augmentation_type=aug_type
-                ))
+                augmented_samples.append(
+                    AugmentedSample(
+                        text=aug_text,
+                        tokens=new_tokens,
+                        labels=labels.copy(),
+                        original_id=original_id,
+                        augmentation_type=aug_type,
+                    )
+                )
             else:
                 # Token count changed - realign labels
                 result = self._realign_labels(tokens, labels, aug_text)
                 if result is not None:
                     new_toks, new_labs = result
-                    augmented_samples.append(AugmentedSample(
-                        text=aug_text,
-                        tokens=new_toks,
-                        labels=new_labs,
-                        original_id=original_id,
-                        augmentation_type=aug_type + "+realigned"
-                    ))
+                    augmented_samples.append(
+                        AugmentedSample(
+                            text=aug_text,
+                            tokens=new_toks,
+                            labels=new_labs,
+                            original_id=original_id,
+                            augmentation_type=aug_type + "+realigned",
+                        )
+                    )
 
         return augmented_samples
 
 
 def augment_dataset(
-    samples: list[dict],
-    augmenter: AddressAugmenter,
-    target_size: int = 1500
+    samples: list[dict], augmenter: AddressAugmenter, target_size: int = 1500
 ) -> list[dict]:
     """
     Augment entire dataset to target size.
@@ -351,17 +347,19 @@ def augment_dataset(
             tokens=sample["tokens"],
             labels=sample["ner_tags"],
             original_id=sample.get("id", 0),
-            n_augments=augs_per_sample
+            n_augments=augs_per_sample,
         )
 
         for aug in aug_samples:
-            augmented.append({
-                "id": f"{aug.original_id}_aug_{len(augmented)}",
-                "text": aug.text,
-                "tokens": aug.tokens,
-                "ner_tags": aug.labels,
-                "augmentation": aug.augmentation_type
-            })
+            augmented.append(
+                {
+                    "id": f"{aug.original_id}_aug_{len(augmented)}",
+                    "text": aug.text,
+                    "tokens": aug.tokens,
+                    "ner_tags": aug.labels,
+                    "augmentation": aug.augmentation_type,
+                }
+            )
 
             if len(augmented) >= target_size:
                 break

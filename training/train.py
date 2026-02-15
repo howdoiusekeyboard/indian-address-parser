@@ -5,32 +5,32 @@ Trains a mBERT-CRF model for address parsing using the converted
 training data from Label Studio annotations.
 """
 
-import json
 import argparse
+import json
 import logging
+import sys
+from collections import Counter
 from pathlib import Path
 
 import torch
-from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
-from torch.optim import AdamW
-from collections import Counter
-from transformers import (
-    AutoTokenizer,
-    get_linear_schedule_with_warmup,
-)
-from tqdm import tqdm
 from seqeval.metrics import (
     classification_report,
     f1_score,
     precision_score,
     recall_score,
 )
+from torch.optim import AdamW
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
+from tqdm import tqdm
+from transformers import (
+    AutoTokenizer,
+    get_linear_schedule_with_warmup,
+)
 
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from address_parser.models import BertCRFForTokenClassification, ModelConfig
-from address_parser.models.config import LABEL2ID, ID2LABEL, BIO_LABELS
+from address_parser.models.config import BIO_LABELS, ID2LABEL, LABEL2ID
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -102,13 +102,7 @@ def compute_sample_weights(samples: list[dict], boost_factor: float = 3.0) -> li
 class AddressNERDataset(Dataset):
     """Dataset for address NER training."""
 
-    def __init__(
-        self,
-        data_path: str,
-        tokenizer,
-        max_length: int = 128,
-        label2id: dict = None
-    ):
+    def __init__(self, data_path: str, tokenizer, max_length: int = 128, label2id: dict = None):
         """
         Initialize dataset.
 
@@ -124,7 +118,7 @@ class AddressNERDataset(Dataset):
 
         # Load data
         self.samples = []
-        with open(data_path, "r", encoding="utf-8") as f:
+        with open(data_path, encoding="utf-8") as f:
             for line in f:
                 sample = json.loads(line.strip())
                 self.samples.append(sample)
@@ -264,9 +258,9 @@ def get_layer_wise_lr_params(model, base_lr, lr_decay, classifier_lr, crf_lr, us
     """
     # Try to get encoder layers
     encoder = None
-    if hasattr(model.bert, 'encoder'):
+    if hasattr(model.bert, "encoder"):
         encoder = model.bert.encoder
-    elif hasattr(model.bert, 'transformer'):
+    elif hasattr(model.bert, "transformer"):
         encoder = model.bert.transformer
 
     if encoder is None or lr_decay >= 1.0:
@@ -280,9 +274,9 @@ def get_layer_wise_lr_params(model, base_lr, lr_decay, classifier_lr, crf_lr, us
         return params
 
     # Get layer modules
-    if hasattr(encoder, 'layer'):
+    if hasattr(encoder, "layer"):
         layers = list(encoder.layer)
-    elif hasattr(encoder, 'layers'):
+    elif hasattr(encoder, "layers"):
         layers = list(encoder.layers)
     else:
         # Can't find layers, fallback
@@ -299,9 +293,9 @@ def get_layer_wise_lr_params(model, base_lr, lr_decay, classifier_lr, crf_lr, us
     optimizer_params = []
 
     # Embeddings get lowest LR
-    embeddings_lr = base_lr * (lr_decay ** num_layers)
+    embeddings_lr = base_lr * (lr_decay**num_layers)
     embeddings_params = []
-    if hasattr(model.bert, 'embeddings'):
+    if hasattr(model.bert, "embeddings"):
         embeddings_params = list(model.bert.embeddings.parameters())
     layer_param_ids.update(id(p) for p in embeddings_params)
     if embeddings_params:
@@ -327,10 +321,12 @@ def get_layer_wise_lr_params(model, base_lr, lr_decay, classifier_lr, crf_lr, us
         optimizer_params.append({"params": list(model.crf.parameters()), "lr": crf_lr})
 
     # Log LR summary
-    logger.info(f"Layer-wise LR decay={lr_decay}: embeddings={embeddings_lr:.2e}, "
-                f"layer_0={base_lr * lr_decay**(num_layers-1):.2e}, "
-                f"layer_{num_layers-1}={base_lr:.2e}, "
-                f"classifier={classifier_lr:.2e}, crf={crf_lr:.2e}")
+    logger.info(
+        f"Layer-wise LR decay={lr_decay}: embeddings={embeddings_lr:.2e}, "
+        f"layer_0={base_lr * lr_decay**(num_layers-1):.2e}, "
+        f"layer_{num_layers-1}={base_lr:.2e}, "
+        f"classifier={classifier_lr:.2e}, crf={crf_lr:.2e}"
+    )
 
     return optimizer_params
 
@@ -440,12 +436,15 @@ def train(
         num_training_steps=total_steps,
     )
 
-    logger.info(f"Training config: model={model_name}, lr={learning_rate}, "
-                f"crf_lr={crf_learning_rate}, lr_decay={lr_decay}, "
-                f"warmup_ratio={warmup_ratio}, patience={early_stopping_patience}")
+    logger.info(
+        f"Training config: model={model_name}, lr={learning_rate}, "
+        f"crf_lr={crf_learning_rate}, lr_decay={lr_decay}, "
+        f"warmup_ratio={warmup_ratio}, patience={early_stopping_patience}"
+    )
     logger.info(f"Data: {len(train_dataset)} train, {len(val_dataset)} val")
-    logger.info(f"Steps: {total_steps} total, {warmup_steps} warmup, "
-                f"{len(train_loader)} steps/epoch")
+    logger.info(
+        f"Steps: {total_steps} total, {warmup_steps} warmup, " f"{len(train_loader)} steps/epoch"
+    )
 
     # Training loop
     best_f1 = 0
@@ -462,7 +461,9 @@ def train(
 
         # Evaluate
         metrics = evaluate(model, val_loader, device, ID2LABEL)
-        logger.info(f"Validation - P: {metrics['precision']:.4f}, R: {metrics['recall']:.4f}, F1: {metrics['f1']:.4f}")
+        logger.info(
+            f"Validation - P: {metrics['precision']:.4f}, R: {metrics['recall']:.4f}, F1: {metrics['f1']:.4f}"
+        )
         logger.info(f"\nPer-entity classification report:\n{metrics['report']}")
 
         # Save best model
@@ -476,20 +477,24 @@ def train(
 
             # Save training info
             with open(output_path / "training_info.json", "w") as f:
-                json.dump({
-                    "best_f1": best_f1,
-                    "best_precision": metrics["precision"],
-                    "best_recall": metrics["recall"],
-                    "epoch": epoch + 1,
-                    "model_name": model_name,
-                    "use_crf": use_crf,
-                    "learning_rate": learning_rate,
-                    "crf_learning_rate": crf_learning_rate,
-                    "lr_decay": lr_decay,
-                    "warmup_ratio": warmup_ratio,
-                    "train_samples": len(train_dataset),
-                    "val_samples": len(val_dataset),
-                }, f, indent=2)
+                json.dump(
+                    {
+                        "best_f1": best_f1,
+                        "best_precision": metrics["precision"],
+                        "best_recall": metrics["recall"],
+                        "epoch": epoch + 1,
+                        "model_name": model_name,
+                        "use_crf": use_crf,
+                        "learning_rate": learning_rate,
+                        "crf_learning_rate": crf_learning_rate,
+                        "lr_decay": lr_decay,
+                        "warmup_ratio": warmup_ratio,
+                        "train_samples": len(train_dataset),
+                        "val_samples": len(val_dataset),
+                    },
+                    f,
+                    indent=2,
+                )
         else:
             patience_counter += 1
             if patience_counter >= early_stopping_patience:
@@ -513,17 +518,23 @@ def train(
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
         test_metrics = evaluate(best_model, test_loader, device, ID2LABEL)
-        logger.info(f"Test - P: {test_metrics['precision']:.4f}, R: {test_metrics['recall']:.4f}, F1: {test_metrics['f1']:.4f}")
+        logger.info(
+            f"Test - P: {test_metrics['precision']:.4f}, R: {test_metrics['recall']:.4f}, F1: {test_metrics['f1']:.4f}"
+        )
         logger.info(f"\nTest per-entity classification report:\n{test_metrics['report']}")
 
         # Save test results
         with open(output_path / "test_results.json", "w") as f:
-            json.dump({
-                "test_f1": test_metrics["f1"],
-                "test_precision": test_metrics["precision"],
-                "test_recall": test_metrics["recall"],
-                "test_report": test_metrics["report"],
-            }, f, indent=2)
+            json.dump(
+                {
+                    "test_f1": test_metrics["f1"],
+                    "test_precision": test_metrics["precision"],
+                    "test_recall": test_metrics["recall"],
+                    "test_report": test_metrics["report"],
+                },
+                f,
+                indent=2,
+            )
 
     return best_f1
 
@@ -537,7 +548,11 @@ def main():
     parser.add_argument("--train", required=True, help="Path to training JSONL")
     parser.add_argument("--val", required=True, help="Path to validation JSONL")
     parser.add_argument("--output", required=True, help="Output directory")
-    parser.add_argument("--model", default="ai4bharat/IndicBERTv2-SS", help="Pretrained model (default: IndicBERTv2-SS)")
+    parser.add_argument(
+        "--model",
+        default="ai4bharat/IndicBERTv2-SS",
+        help="Pretrained model (default: IndicBERTv2-SS)",
+    )
     parser.add_argument("--epochs", type=int, default=10, help="Number of epochs")
     parser.add_argument("--batch-size", type=int, default=16, help="Batch size")
     parser.add_argument("--lr", type=float, default=5e-5, help="Learning rate")
@@ -546,10 +561,14 @@ def main():
     parser.add_argument("--device", default=None, help="Device (cuda/cpu/mps)")
     parser.add_argument("--no-crf", action="store_true", help="Disable CRF layer")
     parser.add_argument("--patience", type=int, default=5, help="Early stopping patience")
-    parser.add_argument("--lr-decay", type=float, default=0.95, help="Layer-wise LR decay factor (1.0=no decay)")
+    parser.add_argument(
+        "--lr-decay", type=float, default=0.95, help="Layer-wise LR decay factor (1.0=no decay)"
+    )
     parser.add_argument("--warmup-ratio", type=float, default=0.1, help="Warmup ratio")
     parser.add_argument("--test", default=None, help="Path to test JSONL for final evaluation")
-    parser.add_argument("--sample-boost", type=float, default=3.0, help="Boost factor for minority entity samples")
+    parser.add_argument(
+        "--sample-boost", type=float, default=3.0, help="Boost factor for minority entity samples"
+    )
 
     args = parser.parse_args()
 
