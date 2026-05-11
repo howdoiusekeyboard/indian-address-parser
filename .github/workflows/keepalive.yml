@@ -1,0 +1,56 @@
+name: HF Space keepalive
+
+on:
+  schedule:
+    - cron: '13 * * * *'
+  workflow_dispatch:
+    inputs:
+      force_ping:
+        description: Force a ping even if the timer has not elapsed
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ping:
+    name: Probe HF Space
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          architecture: x64
+
+      - name: Run keepalive
+        id: keepalive
+        env:
+          FORCE_PING: ${{ inputs.force_ping || 'false' }}
+        run: python .github/scripts/keepalive.py
+
+      - name: Commit updated state
+        if: steps.keepalive.outputs.pinged == 'true'
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add .github/keepalive_state.json
+          git diff --staged --quiet && exit 0
+          git commit -m "chore(keepalive): ping at ${{ steps.keepalive.outputs.new_timestamp }} [skip ci]"
+          git push
