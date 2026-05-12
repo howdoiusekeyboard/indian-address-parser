@@ -173,6 +173,3 @@ ruff check src/ tests/    # lint
 mypy src/                 # type check
 ```
 
-## License
-
-MIT
