@@ -21,7 +21,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 HF_SPACE_URL = os.environ.get(
     "HF_SPACE_URL",
@@ -112,7 +112,7 @@ def load_last_ping(state_path: pathlib.Path) -> datetime | None:
     if not raw:
         return None
     try:
-        return datetime.fromisoformat(raw).astimezone(timezone.utc)
+        return datetime.fromisoformat(raw).astimezone(UTC)
     except (ValueError, TypeError):
         return None
 
@@ -124,9 +124,13 @@ def save_last_ping(state_path: pathlib.Path, when: datetime) -> None:
     )
 
 
-def ping_space(url: str, headers: dict[str, str], timeout: float = HTTP_TIMEOUT_SECONDS) -> tuple[int, str]:
+def ping_space(
+    url: str, headers: dict[str, str], timeout: float = HTTP_TIMEOUT_SECONDS
+) -> tuple[int, str]:
     req = urllib.request.Request(url, headers=headers, method="GET")
-    with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 — fixed scheme, headers controlled
+    with urllib.request.urlopen(
+        req, timeout=timeout
+    ) as resp:  # noqa: S310 — fixed scheme, headers controlled
         code = int(resp.status)
         head = resp.read(256)
         try:
@@ -147,7 +151,7 @@ def emit_github_output(**pairs: str) -> None:
 
 
 def main() -> int:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     last_ping = load_last_ping(STATE_FILE)
     rng = secrets.SystemRandom()
     target_hours = pick_target_hours(rng)

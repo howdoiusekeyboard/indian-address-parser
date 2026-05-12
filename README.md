@@ -172,4 +172,3 @@ black src/ tests/         # format
 ruff check src/ tests/    # lint
 mypy src/                 # type check
 ```
-

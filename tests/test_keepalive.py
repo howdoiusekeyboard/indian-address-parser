@@ -10,7 +10,7 @@ import json
 import pathlib
 import random
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -19,8 +19,7 @@ sys.path.insert(0, str(_REPO_ROOT / ".github" / "scripts"))
 
 import keepalive  # noqa: E402
 
-
-NOW = datetime(2026, 5, 11, 12, 0, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 5, 11, 12, 0, 0, tzinfo=UTC)
 
 
 @pytest.mark.parametrize(
@@ -127,5 +126,5 @@ def test_load_last_ping_normalizes_to_utc(tmp_path: pathlib.Path) -> None:
     state.write_text(json.dumps({"last_ping": naive_offset}), encoding="utf-8")
     loaded = keepalive.load_last_ping(state)
     assert loaded is not None
-    assert loaded.tzinfo == timezone.utc
-    assert loaded == datetime(2026, 5, 11, 12, 0, 0, tzinfo=timezone.utc)
+    assert loaded.tzinfo == UTC
+    assert loaded == datetime(2026, 5, 11, 12, 0, 0, tzinfo=UTC)
