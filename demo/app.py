@@ -307,7 +307,7 @@ Parse unstructured Indian addresses into structured components using **mBERT-CRF
                 inputs=[address_input],
                 outputs=[highlighted_output, entity_table, structured_output, inference_time],
                 fn=parse_address_ui,
-                cache_examples=True,
+                cache_examples=False,
                 label="Example Addresses",
             )
 
