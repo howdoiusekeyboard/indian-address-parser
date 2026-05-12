@@ -362,7 +362,7 @@ Production-grade NLP for parsing Indian addresses using **IndicBERTv2-SS + CRF**
 ### Links
 
 - [GitHub](https://github.com/howdoiusekeyboard/indian-address-parser)
-- [Model on HuggingFace](https://huggingface.co/x2aqq/indian-address-parser-model)
+- [Model on HuggingFace](https://huggingface.co/howdoiuse-keyboard/indian-address-parser-model)
 - [API Docs](/docs)
 
 **Version**: {VERSION} | **Gradio**: {gr.__version__}

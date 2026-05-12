@@ -32,7 +32,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
     TRANSFORMERS_CACHE=/tmp/hf_cache
 
 # Download models at build time
-ARG HF_MODEL_REPO=x2aqq/indian-address-parser-model
+ARG HF_MODEL_REPO=howdoiuse-keyboard/indian-address-parser-model
 RUN python -c "from huggingface_hub import snapshot_download; snapshot_download('${HF_MODEL_REPO}', local_dir='/app/models/address_ner_v4')"
 RUN python -c "from transformers import AutoModel, AutoTokenizer; AutoModel.from_pretrained('ai4bharat/IndicBERTv2-SS'); AutoTokenizer.from_pretrained('ai4bharat/IndicBERTv2-SS')"
 
