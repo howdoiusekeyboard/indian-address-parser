@@ -9,7 +9,7 @@ NLP system for parsing unstructured Indian addresses into structured components.
 
 Extracts 15 entity types from Indian addresses: house number, floor, block, sector, gali, colony, area, subarea, khasra, pincode, city, state, and more. Handles Hindi (Devanagari) and English text. Achieves **94.3% F1** on test data with <30ms inference.
 
-**Live Demo:** [addressparser.kushagragolash.tech](https://addressparser.kushagragolash.tech)
+**Live Demo:** [addressparser.kushagragolash.dev](https://addressparser.kushagragolash.dev)
 
 ## Installation
 
@@ -51,15 +51,15 @@ print(result.pincode)       # 110041
 
 ```bash
 # Health check
-curl https://addressparser.kushagragolash.tech/health
+curl https://addressparser.kushagragolash.dev/health
 
 # Parse single address
-curl -X POST https://addressparser.kushagragolash.tech/parse \
+curl -X POST https://addressparser.kushagragolash.dev/parse \
   -H "Content-Type: application/json" \
   -d '{"address": "H.NO. 123, DWARKA SECTOR 12, NEW DELHI 110078"}'
 
 # Batch parse
-curl -X POST https://addressparser.kushagragolash.tech/batch \
+curl -X POST https://addressparser.kushagragolash.dev/batch \
   -H "Content-Type: application/json" \
   -d '{"addresses": ["ADDRESS 1", "ADDRESS 2"]}'
 ```

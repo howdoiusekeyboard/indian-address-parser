@@ -242,14 +242,14 @@ CUSTOM_CSS = """
 OG_HEAD = """
 <meta property="og:title" content="Indian Address Parser">
 <meta property="og:description" content="Parse unstructured Indian addresses into structured components. ML + NLP powered, supports Hindi and English.">
-<meta property="og:image" content="https://addressparser.kushagragolash.tech/static/og-preview.jpeg">
+<meta property="og:image" content="https://addressparser.kushagragolash.dev/static/og-preview.jpeg">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://addressparser.kushagragolash.tech">
+<meta property="og:url" content="https://addressparser.kushagragolash.dev">
 <meta name="description" content="Parse unstructured Indian addresses into structured components. ML + NLP powered, supports Hindi and English.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Indian Address Parser">
 <meta name="twitter:description" content="ML + NLP system for parsing Indian addresses into structured components.">
-<meta name="twitter:image" content="https://addressparser.kushagragolash.tech/static/og-preview.jpeg">
+<meta name="twitter:image" content="https://addressparser.kushagragolash.dev/static/og-preview.jpeg">
 """
 
 with gr.Blocks(title="Indian Address Parser", css=CUSTOM_CSS, head=OG_HEAD) as demo:
