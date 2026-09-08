@@ -2,20 +2,20 @@
 # Latest stable versions as of Feb 2026
 
 # Core ML
-torch>=2.10.0
-transformers>=5.0.0
+torch>=2.13.0
+transformers>=5.5.0
 tokenizers>=0.22.2
 safetensors>=0.7.0
 huggingface_hub>=1.3.7
 
 # Gradio 6.5.1 with all features
-gradio>=6.5.1
+gradio>=6.15.1
 gradio-client>=2.0.3
 
 # API
 fastapi>=0.128.0
 uvicorn>=0.40.0
-starlette>=0.52.1
+starlette>=1.3.1
 orjson>=3.11.7
 
 # Data validation
@@ -28,5 +28,5 @@ regex>=2026.1.15
 
 # Utilities
 aiofiles>=25.1.0
-pillow>=12.1.0
+pillow>=12.3.0
 numpy>=2.4.2
