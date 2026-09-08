@@ -24,7 +24,7 @@ classifiers = [
 requires-python = ">=3.14"
 dependencies = [
     "torch>=2.13.0",
-    "transformers>=5.5.0",
+    "transformers>=5.10.1",
     "tokenizers>=0.22.2",
     "datasets>=4.5.0",
     "safetensors>=0.7.0",
